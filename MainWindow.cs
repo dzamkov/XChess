@@ -16,8 +16,18 @@ namespace XChess
     {
         public MainWindow() : base("XChess", 640, 480)
         {
-            this.Control = this._LayerContainer = new LayerContainer(new BoardView(null));
+            this.VSync = VSyncMode.Off;
+            Path? resources = Path.Resources;
+
+            Board board = Board.Initial;
+            this.Control = this._LayerContainer = new LayerContainer(new BoardView(board, resources.Value));
             this.WindowState = WindowState.Maximized;
+        }
+
+        protected override void OnRenderFrame(FrameEventArgs e)
+        {
+            GL.Clear(ClearBufferMask.DepthBufferBit);
+            base.OnRenderFrame(e);
         }
 
         /// <summary>
@@ -25,7 +35,7 @@ namespace XChess
         /// </summary>
         public static void Main(string[] Args)
         {
-            new MainWindow().Run(60.0);
+            new MainWindow().Run(120.0);
         }
 
         private LayerContainer _LayerContainer;

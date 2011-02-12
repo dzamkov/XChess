@@ -55,6 +55,8 @@
     <Compile Include="BoardView.cs" />
     <Compile Include="MainWindow.cs" />
     <Compile Include="Move.cs" />
+    <Compile Include="Path.cs" />
     <Compile Include="Piece.cs" />
+    <Compile Include="Texture.cs" />
   </ItemGroup>
 </Project>
