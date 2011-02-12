@@ -16,7 +16,7 @@ namespace XChess
     {
         public MainWindow() : base("XChess", 640, 480)
         {
-            this.Control = this._LayerContainer = new LayerContainer(new Blank(Color.RGB(0.0, 0.0, 0.0)));
+            this.Control = this._LayerContainer = new LayerContainer(new BoardView(null));
             this.WindowState = WindowState.Maximized;
         }
 

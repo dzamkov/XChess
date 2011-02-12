@@ -51,6 +51,10 @@
     <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Board.cs" />
+    <Compile Include="BoardView.cs" />
     <Compile Include="MainWindow.cs" />
+    <Compile Include="Move.cs" />
+    <Compile Include="Piece.cs" />
   </ItemGroup>
 </Project>
