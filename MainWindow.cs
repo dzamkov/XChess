@@ -27,6 +27,7 @@ namespace XChess
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             GL.Clear(ClearBufferMask.DepthBufferBit);
+            GL.MatrixMode(MatrixMode.Projection);
             base.OnRenderFrame(e);
         }
 

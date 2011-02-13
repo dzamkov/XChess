@@ -41,6 +41,7 @@ namespace XChess
         public override void Render(GUIRenderContext Context)
         {
             Context.PushClip(new Rectangle(this.Size));
+
             GL.PushMatrix();
             GL.Scale(-this.Size.X, -this.Size.Y, 1.0);
             GL.Translate(-0.5, -0.5, 0.0);
@@ -65,21 +66,30 @@ namespace XChess
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Lighting);
             GL.Enable(EnableCap.ColorMaterial);
+            
 
             GL.Enable(EnableCap.Light0);
-            GL.Light(LightName.Light0, LightParameter.Ambient, new Vector4(0.2f, 0.2f, 0.2f, 1.0f));
-            GL.Light(LightName.Light0, LightParameter.Diffuse, new Vector4(0.8f, 0.8f, 0.8f, 1.0f));
-            GL.Light(LightName.Light0, LightParameter.Position, new Vector4(5.0f, 3.0f, 4.0f, 0.0f));
-            GL.Light(LightName.Light0, LightParameter.Specular, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+            GL.Light(LightName.Light0, LightParameter.Position, new Vector4(1.0f, 1.0f, 1.0f, 0.0f));
+
+            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+            GL.ColorMaterial(MaterialFace.FrontAndBack, ColorMaterialParameter.AmbientAndDiffuse);
 
             GL.CullFace(CullFaceMode.Back);
-            GL.Color4(1.0, 1.0, 1.0, 1.0);
             this._SquaresTexture.Bind2D();
             GL.Begin(BeginMode.Quads);
             for (int x = 0; x < files; x++)
             {
                 for (int y = 0; y < ranks; y++)
                 {
+                    if (x == y)
+                    {
+                        GL.Color4(0.5, 2.0, 0.5, 1.0);
+                    }
+                    else
+                    {
+                        GL.Color4(1.0, 1.0, 1.0, 1.0);
+                    }
+
                     const float texw = 0.5f;
                     const float texh = 1.0f;
                     float texadd = ((x + y) % 2 == 0) ? 0.0f : 0.5f;
@@ -95,6 +105,7 @@ namespace XChess
                 }
             }
             GL.End();
+
             this._BoardTexture.Bind2D();
             double edgedown = 0.4;
             double edgeout = 0.2;
@@ -110,6 +121,7 @@ namespace XChess
                 new Vector3d(-edgeout, ranks + edgeout, -edgedown),
             };
             GL.Begin(BeginMode.Quads);
+            GL.Color4(1.0, 1.0, 1.0, 1.0);
             for (int t = 0; t < 4; t++)
             {
                 int a = t;
@@ -130,13 +142,21 @@ namespace XChess
             GL.End();
             GL.Disable(EnableCap.Texture2D);
 
+            // Pieces
+            GL.Enable(EnableCap.Normalize);
+            
+
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.LoadIdentity();
             GL.PushMatrix();
             GL.Translate(0.5, 0.5, 0.0);
             GL.Scale(0.4, 0.4, 0.4 + Math.Sin(this._Time * 10.0) * 0.2);
-            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Diffuse, new Vector4(0.4f, 0.4f, 0.4f, 1.0f));
-            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(0.6f, 0.6f, 0.6f, 1.0f));
-            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 96);
+            
+            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.AmbientAndDiffuse, new Vector4(0.1f, 0.1f, 0.1f, 1.0f));
+            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 32);
             GL.Color4(0.0, 0.0, 0.0, 1.0);
+
             this._PawnMesh.Render();
             GL.PopMatrix();
 
@@ -144,12 +164,14 @@ namespace XChess
             GL.Translate(1.5, 0.5, 0.0);
             GL.Scale(0.4, 0.4, 0.4 - Math.Sin(this._Time * 10.0) * 0.2);
             GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Diffuse, new Vector4(0.8f, 0.8f, 0.8f, 1.0f));
-            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(0.6f, 0.6f, 0.6f, 1.0f));
+            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
             GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 96);
             GL.Color4(0.8, 0.8, 0.8, 1.0);
+
             this._PawnMesh.Render();
             GL.PopMatrix();
 
+            GL.Disable(EnableCap.Normalize);
             GL.Disable(EnableCap.ColorMaterial);
             GL.Disable(EnableCap.Lighting);
             GL.Disable(EnableCap.DepthTest);
