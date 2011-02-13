@@ -76,7 +76,7 @@ namespace XChess
             int files = this._CurrentBoard.Files;
 
             // Set up camera
-            Vector3d eyeoffset = new Vector3d(0.0, 20.0, 10.0);
+            Vector3d eyeoffset = new Vector3d(20.0 * Math.Sin(this._Time), 20.0 * Math.Cos(this._Time), 10.0);
             Vector3d midboard = new Vector3d((double)files * 0.5, (double)ranks * 0.5, 0.0);
             Vector3d up = new Vector3d(0.0, 0.0, 1.0);
 
@@ -95,7 +95,7 @@ namespace XChess
             
 
             GL.Enable(EnableCap.Light0);
-            GL.Light(LightName.Light0, LightParameter.Position, new Vector4(1.0f, 1.0f, 1.0f, 0.0f));
+            GL.Light(LightName.Light0, LightParameter.Position, new Vector4(1.0f, 0.8f, 1.0f, 0.0f));
             this._DrawBoard();
 
             // Pieces
@@ -137,7 +137,7 @@ namespace XChess
             {
                 for (int y = 0; y < ranks; y++)
                 {
-                    if (x == y)
+                    if (x == 4)
                     {
                         GL.Color4(0.5, 2.0, 0.5, 1.0);
                     }
@@ -201,9 +201,10 @@ namespace XChess
 
         public override void Update(GUIControlContext Context, double Time)
         {
-
+            this._Time += Time * 0.2;
         }
 
+        private double _Time;
         private Texture _SquaresTexture;
         private Texture _BoardTexture;
         private List<PieceVisual> _Visuals;
@@ -231,16 +232,14 @@ namespace XChess
             {
                 if (this.State.Player == 0)
                 {
-                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.AmbientAndDiffuse, new Vector4(0.1f, 0.1f, 0.1f, 1.0f));
                     GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
                     GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 32);
-                    GL.Color4(0.0, 0.0, 0.0, 1.0);
+                    GL.Color4(0.1, 0.1, 0.1, 1.0);
                 }
                 else
                 {
-                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Diffuse, new Vector4(0.8f, 0.8f, 0.8f, 1.0f));
                     GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 96);
+                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 32);
                     GL.Color4(0.8, 0.8, 0.8, 1.0);
                 }
                 GL.Translate(this.Square.File + 0.5, this.Square.Rank + 0.5, 0.0);
