@@ -1,0 +1,12 @@
+# Blender MTL File: 'Chess.blend'
+# Material Count: 1
+newmtl Glass
+Ns 168.627451
+Ka 0.000000 0.000000 0.000000
+Kd 0.800000 0.800000 0.800000
+Ks 1.000000 1.000000 1.000000
+Ni 1.000000
+d 0.315789
+illum 2
+
+

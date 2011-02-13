@@ -262,6 +262,15 @@ namespace XChess
     public class QueenPiece : Piece
     {
 
+        public override Mesh DisplayMesh
+        {
+            get
+            {
+                return Mesh;
+            }
+        }
+
+        public static readonly Mesh Mesh = Mesh.LoadOBJ(Path.Resources["Models"]["Queen.obj"]);
     }
 
     /// <summary>
@@ -274,6 +283,16 @@ namespace XChess
         /// Can this king castle eventually?
         /// </summary>
         public bool CanCastle;
+
+        public override Mesh DisplayMesh
+        {
+            get
+            {
+                return Mesh;
+            }
+        }
+
+        public static readonly Mesh Mesh = Mesh.LoadOBJ(Path.Resources["Models"]["King.obj"]);
     }
 
     /// <summary>
@@ -282,6 +301,15 @@ namespace XChess
     public class KnightPiece : Piece
     {
 
+        public override Mesh DisplayMesh
+        {
+            get
+            {
+                return Mesh;
+            }
+        }
+
+        public static readonly Mesh Mesh = Mesh.LoadOBJ(Path.Resources["Models"]["Knight.obj"]);
     }
 
     /// <summary>
@@ -290,5 +318,14 @@ namespace XChess
     public class BishopPiece : Piece
     {
 
+        public override Mesh DisplayMesh
+        {
+            get
+            {
+                return Mesh;
+            }
+        }
+
+        public static readonly Mesh Mesh = Mesh.LoadOBJ(Path.Resources["Models"]["Bishop.obj"]);
     }
 }
