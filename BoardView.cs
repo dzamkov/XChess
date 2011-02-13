@@ -96,6 +96,7 @@ namespace XChess
 
             GL.Enable(EnableCap.Light0);
             GL.Light(LightName.Light0, LightParameter.Position, new Vector4(1.0f, 0.8f, 1.0f, 0.0f));
+            GL.Light(LightName.Light0, LightParameter.Ambient, new Vector4(0.3f, 0.3f, 0.3f, 0.0f));
             this._DrawBoard();
 
             // Pieces
@@ -143,7 +144,7 @@ namespace XChess
                     }
                     else
                     {
-                        GL.Color4(1.0, 1.0, 1.0, 1.0);
+                        GL.Color4(0.8, 0.8, 0.8, 1.0);
                     }
 
                     const float texw = 0.5f;
@@ -238,9 +239,9 @@ namespace XChess
                 }
                 else
                 {
-                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 32);
-                    GL.Color4(0.8, 0.8, 0.8, 1.0);
+                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(0.6f, 0.6f, 0.6f, 0.6f));
+                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 72);
+                    GL.Color4(0.7, 0.7, 0.7, 1.0);
                 }
                 GL.Translate(this.Square.File + 0.5, this.Square.Rank + 0.5, 0.0);
                 GL.Scale(0.4, 0.4, 0.4);
