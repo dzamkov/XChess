@@ -114,24 +114,30 @@ namespace XChess
         /// <summary>
         /// Gets the path for the resources directory.
         /// </summary>
-        public static Path? Resources
+        public static Path Resources
         {
             get
             {
-                Path? cur = ProcessFile.Parent;
-                while (cur != null)
+                if (_Resources._Path == null)
                 {
-                    Path curval = cur.Value;
-                    Path resources = curval["Resources"];
-                    if (resources.ValidDirectory)
+                    Path? cur = ProcessFile.Parent;
+                    while (cur != null)
                     {
-                        return resources;
+                        Path curval = cur.Value;
+                        Path resources = curval["Resources"];
+                        if (resources.ValidDirectory)
+                        {
+                            _Resources = resources;
+                        }
+                        cur = curval.MaybeParent;
                     }
-                    cur = curval.MaybeParent;
                 }
-                return null;
+                return _Resources;
+                throw new Exception("No resources folder");
             }
         }
+
+        private static Path _Resources = new Path(null);
 
         /// <summary>
         /// Reads the entire text from the file located at the specified path.

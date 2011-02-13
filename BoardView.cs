@@ -14,13 +14,15 @@ namespace XChess
     /// </summary>
     public class BoardView : Control
     {
-        public BoardView(Board Board, Path Resources)
+        public BoardView(Board Board)
         {
             this._CurrentBoard = Board;
 
-            this._SquaresTexture = Texture.Load(Resources["Textures"]["Squares.png"]);
-            this._BoardTexture = Texture.Load(Resources["Textures"]["Board.png"]);
-            this._PawnMesh = Mesh.LoadOBJ(Resources["Models"]["Pawn.obj"]);
+            Path resources = Path.Resources;
+            this._SquaresTexture = Texture.Load(resources["Textures"]["Squares.png"]);
+            this._BoardTexture = Texture.Load(resources["Textures"]["Board.png"]);
+
+            this._SetupVisuals();
         }
 
         /// <summary>
@@ -35,6 +37,30 @@ namespace XChess
             set
             {
                 this._CurrentBoard = value;
+                this._SetupVisuals();
+            }
+        }
+
+        /// <summary>
+        /// Sets up visuals for all the pieces.
+        /// </summary>
+        private void _SetupVisuals()
+        {
+            this._Visuals = new List<PieceVisual>();
+            Board current = this._CurrentBoard;
+            int files = current.Files;
+            int ranks = current.Ranks;
+            for (int x = 0; x < files; x++)
+            {
+                for (int y = 0; y < ranks; y++)
+                {
+                    Square sqr = new Square(y, x);
+                    Piece piece = current.GetPiece(sqr);
+                    if (piece != null)
+                    {
+                        this._Visuals.Add(new PieceVisual(sqr, piece));
+                    }
+                }
             }
         }
 
@@ -61,20 +87,50 @@ namespace XChess
             GL.MultMatrix(ref view);
 
             // Draw board
-            GL.Enable(EnableCap.Texture2D);
             GL.Enable(EnableCap.CullFace);
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Lighting);
             GL.Enable(EnableCap.ColorMaterial);
+            GL.CullFace(CullFaceMode.Back);
             
 
             GL.Enable(EnableCap.Light0);
             GL.Light(LightName.Light0, LightParameter.Position, new Vector4(1.0f, 1.0f, 1.0f, 0.0f));
+            this._DrawBoard();
 
+            // Pieces
+            GL.Enable(EnableCap.Normalize);
+
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.LoadIdentity();
+            foreach (PieceVisual pv in this._Visuals)
+            {
+                GL.PushMatrix();
+                pv.Render();
+                GL.PopMatrix();
+            }
+
+            GL.Disable(EnableCap.Normalize);
+            GL.Disable(EnableCap.ColorMaterial);
+            GL.Disable(EnableCap.Lighting);
+            GL.Disable(EnableCap.DepthTest);
+            GL.Disable(EnableCap.CullFace);
+            
+
+
+            GL.PopMatrix();
+            Context.Pop();
+        }
+
+        private void _DrawBoard()
+        {
+            int ranks = this._CurrentBoard.Ranks;
+            int files = this._CurrentBoard.Files;
+            GL.Enable(EnableCap.Texture2D);
             GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
             GL.ColorMaterial(MaterialFace.FrontAndBack, ColorMaterialParameter.AmbientAndDiffuse);
 
-            GL.CullFace(CullFaceMode.Back);
+            
             this._SquaresTexture.Bind2D();
             GL.Begin(BeginMode.Quads);
             for (int x = 0; x < files; x++)
@@ -126,7 +182,7 @@ namespace XChess
             {
                 int a = t;
                 int b = (t + 1) % 4;
-                
+
                 Vector3d ca = boardcorners[a];
                 Vector3d cb = boardcorners[b];
                 Vector3d cc = boardcorners[b + 4];
@@ -141,57 +197,71 @@ namespace XChess
             }
             GL.End();
             GL.Disable(EnableCap.Texture2D);
-
-            // Pieces
-            GL.Enable(EnableCap.Normalize);
-            
-
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.LoadIdentity();
-            GL.PushMatrix();
-            GL.Translate(0.5, 0.5, 0.0);
-            GL.Scale(0.4, 0.4, 0.4 + Math.Sin(this._Time * 10.0) * 0.2);
-            
-            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.AmbientAndDiffuse, new Vector4(0.1f, 0.1f, 0.1f, 1.0f));
-            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 32);
-            GL.Color4(0.0, 0.0, 0.0, 1.0);
-
-            this._PawnMesh.Render();
-            GL.PopMatrix();
-
-            GL.PushMatrix();
-            GL.Translate(1.5, 0.5, 0.0);
-            GL.Scale(0.4, 0.4, 0.4 - Math.Sin(this._Time * 10.0) * 0.2);
-            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Diffuse, new Vector4(0.8f, 0.8f, 0.8f, 1.0f));
-            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 96);
-            GL.Color4(0.8, 0.8, 0.8, 1.0);
-
-            this._PawnMesh.Render();
-            GL.PopMatrix();
-
-            GL.Disable(EnableCap.Normalize);
-            GL.Disable(EnableCap.ColorMaterial);
-            GL.Disable(EnableCap.Lighting);
-            GL.Disable(EnableCap.DepthTest);
-            GL.Disable(EnableCap.CullFace);
-            
-
-
-            GL.PopMatrix();
-            Context.Pop();
         }
 
         public override void Update(GUIControlContext Context, double Time)
         {
-            this._Time += Time;
+
         }
 
-        private Mesh _PawnMesh;
         private Texture _SquaresTexture;
         private Texture _BoardTexture;
-        private double _Time;
+        private List<PieceVisual> _Visuals;
         private Board _CurrentBoard;
+    }
+
+    /// <summary>
+    /// A visual representation of a piece.
+    /// </summary>
+    public class PieceVisual
+    {
+        public PieceVisual(Square Square, Piece State)
+        {
+            this.Square = Square;
+            this.State = State;
+            this.Mesh = State.DisplayMesh;
+        }
+
+        /// <summary>
+        /// Renders the visual.
+        /// </summary>
+        public void Render()
+        {
+            if (this.Mesh != null)
+            {
+                if (this.State.Player == 0)
+                {
+                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.AmbientAndDiffuse, new Vector4(0.1f, 0.1f, 0.1f, 1.0f));
+                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 32);
+                    GL.Color4(0.0, 0.0, 0.0, 1.0);
+                }
+                else
+                {
+                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Diffuse, new Vector4(0.8f, 0.8f, 0.8f, 1.0f));
+                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 96);
+                    GL.Color4(0.8, 0.8, 0.8, 1.0);
+                }
+                GL.Translate(this.Square.File + 0.5, this.Square.Rank + 0.5, 0.0);
+                GL.Scale(0.4, 0.4, 0.4);
+                this.Mesh.Render();
+            }
+        }
+
+        /// <summary>
+        /// The mesh displayed for the piece.
+        /// </summary>
+        public Mesh Mesh;
+
+        /// <summary>
+        /// The square the piece is on.
+        /// </summary>
+        public Square Square;
+
+        /// <summary>
+        /// The state of the piece.
+        /// </summary>
+        public Piece State;
     }
 }

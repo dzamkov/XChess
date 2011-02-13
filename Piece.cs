@@ -95,6 +95,17 @@ namespace XChess
         }
 
         /// <summary>
+        /// Gets the mesh used to display this piece.
+        /// </summary>
+        public virtual Mesh DisplayMesh
+        {
+            get
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Gets the player that owns this piece.
         /// </summary>
         public int Player;
@@ -211,6 +222,16 @@ namespace XChess
         /// Can this pawn jump two squares the next turn?
         /// </summary>
         public bool CanJump;
+
+        public override Mesh DisplayMesh
+        {
+            get
+            {
+                return Mesh;
+            }
+        }
+
+        public static readonly Mesh Mesh = Mesh.LoadOBJ(Path.Resources["Models"]["Pawn.obj"]);
     }
 
     /// <summary>
@@ -223,6 +244,16 @@ namespace XChess
         /// Can this rook castle eventually?
         /// </summary>
         public bool CanCastle;
+
+        public override Mesh DisplayMesh
+        {
+            get
+            {
+                return Mesh;
+            }
+        }
+
+        public static readonly Mesh Mesh = Mesh.LoadOBJ(Path.Resources["Models"]["Rook.obj"]);
     }
 
     /// <summary>

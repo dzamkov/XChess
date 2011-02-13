@@ -17,10 +17,9 @@ namespace XChess
         public MainWindow() : base("XChess", 640, 480)
         {
             this.VSync = VSyncMode.Off;
-            Path? resources = Path.Resources;
 
             Board board = Board.Initial;
-            this.Control = this._LayerContainer = new LayerContainer(new BoardView(board, resources.Value));
+            this.Control = this._LayerContainer = new LayerContainer(new BoardView(board));
             this.WindowState = WindowState.Maximized;
         }
 
