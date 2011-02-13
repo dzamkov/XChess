@@ -96,12 +96,13 @@ namespace XChess
 
             GL.Enable(EnableCap.Light0);
             GL.Light(LightName.Light0, LightParameter.Position, new Vector4(1.0f, 0.8f, 1.0f, 0.0f));
-            GL.Light(LightName.Light0, LightParameter.Ambient, new Vector4(0.3f, 0.3f, 0.3f, 0.0f));
+            GL.Light(LightName.Light0, LightParameter.Ambient, new Vector4(0.4f, 0.4f, 0.4f, 1.0f));
             this._DrawBoard();
 
             // Pieces
             GL.Enable(EnableCap.Normalize);
 
+            GL.ColorMaterial(MaterialFace.FrontAndBack, ColorMaterialParameter.Diffuse);
             GL.MatrixMode(MatrixMode.Modelview);
             GL.LoadIdentity();
             foreach (PieceVisual pv in this._Visuals)
@@ -233,15 +234,18 @@ namespace XChess
             {
                 if (this.State.Player == 0)
                 {
+                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Ambient, new Vector4(0.1f, 0.1f, 0.1f, 1.0f));
                     GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
                     GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 32);
-                    GL.Color4(0.1, 0.1, 0.1, 1.0);
+                    GL.Color4(0.0, 0.0, 0.0, 1.0);
                 }
                 else
                 {
-                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(0.6f, 0.6f, 0.6f, 0.6f));
-                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 72);
-                    GL.Color4(0.7, 0.7, 0.7, 1.0);
+                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Ambient, new Vector4(0.7f, 0.7f, 0.7f, 1.0f));
+                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(0.9f, 0.9f, 0.9f, 1.0f));
+                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 127);
+                    GL.Color4(0.6, 0.6, 0.6, 1.0);
+                    
                 }
                 GL.Translate(this.Square.File + 0.5, this.Square.Rank + 0.5, 0.0);
                 GL.Scale(0.4, 0.4, 0.4);
