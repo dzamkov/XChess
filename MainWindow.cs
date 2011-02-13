@@ -19,7 +19,7 @@ namespace XChess
             this.VSync = VSyncMode.Off;
 
             Board board = Board.Initial;
-            this.Control = this._LayerContainer = new LayerContainer(new BoardView(board));
+            this.Control = this._LayerContainer = new LayerContainer(new BoardView(board).WithBorder(3.0).WithCenterAlign(new Point(800.0, 800.0)));
             this.WindowState = WindowState.Maximized;
         }
 

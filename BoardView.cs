@@ -12,7 +12,7 @@ namespace XChess
     /// <summary>
     /// A view of a board.
     /// </summary>
-    public class BoardView : Control
+    public class BoardView : Render3DControl
     {
         public BoardView(Board Board)
         {
@@ -64,39 +64,34 @@ namespace XChess
             }
         }
 
-        public override void Render(GUIRenderContext Context)
+        public override void SetupProjection(Point Viewsize)
         {
-            Context.PushClip(new Rectangle(this.Size));
-
-            GL.PushMatrix();
-            GL.Scale(-this.Size.X, -this.Size.Y, 1.0);
-            GL.Translate(-0.5, -0.5, 0.0);
-
             int ranks = this._CurrentBoard.Ranks;
             int files = this._CurrentBoard.Files;
 
-            // Set up camera
-            Vector3d eyeoffset = new Vector3d(20.0 * Math.Sin(this._Time), 20.0 * Math.Cos(this._Time), 10.0);
+            Vector3d eyeoffset = new Vector3d(20.0 * Math.Sin(this._Time), 20.0 * Math.Cos(this._Time), 20.0);
             Vector3d midboard = new Vector3d((double)files * 0.5, (double)ranks * 0.5, 0.0);
             Vector3d up = new Vector3d(0.0, 0.0, 1.0);
 
-            double aspect = this.Size.X / this.Size.Y;
-            Matrix4d proj = Matrix4d.CreatePerspectiveFieldOfView(0.7, aspect, 0.1, 100.0);
+            Matrix4d proj = Matrix4d.CreatePerspectiveFieldOfView(0.7, Viewsize.AspectRatio, 0.1, 100.0);
             GL.MultMatrix(ref proj);
             Matrix4d view = Matrix4d.LookAt(eyeoffset + midboard, midboard, up);
             GL.MultMatrix(ref view);
+        }
 
+        public override void RenderScene()
+        {
             // Draw board
             GL.Enable(EnableCap.CullFace);
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Lighting);
             GL.Enable(EnableCap.ColorMaterial);
             GL.CullFace(CullFaceMode.Back);
-            
+
 
             GL.Enable(EnableCap.Light0);
             GL.Light(LightName.Light0, LightParameter.Position, new Vector4(1.0f, 0.8f, 1.0f, 0.0f));
-            GL.Light(LightName.Light0, LightParameter.Ambient, new Vector4(0.4f, 0.4f, 0.4f, 1.0f));
+            GL.Light(LightName.Light0, LightParameter.Ambient, new Vector4(0.3f, 0.3f, 0.3f, 1.0f));
             this._DrawBoard();
 
             // Pieces
@@ -117,11 +112,6 @@ namespace XChess
             GL.Disable(EnableCap.Lighting);
             GL.Disable(EnableCap.DepthTest);
             GL.Disable(EnableCap.CullFace);
-            
-
-
-            GL.PopMatrix();
-            Context.Pop();
         }
 
         private void _DrawBoard()
@@ -244,7 +234,7 @@ namespace XChess
                     GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Ambient, new Vector4(0.7f, 0.7f, 0.7f, 1.0f));
                     GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(0.9f, 0.9f, 0.9f, 1.0f));
                     GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 127);
-                    GL.Color4(0.6, 0.6, 0.6, 1.0);
+                    GL.Color4(0.5, 0.5, 0.5, 1.0);
                     
                 }
                 GL.Translate(this.Square.File + 0.5, this.Square.Rank + 0.5, 0.0);

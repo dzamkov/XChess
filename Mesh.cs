@@ -14,11 +14,9 @@ namespace XChess
     /// </summary>
     public class Mesh
     {
-        public Mesh(uint ElementID, uint ArrayID, int ElementCount)
+        private Mesh()
         {
-            this._ElementID = ElementID;
-            this._ArrayID = ArrayID;
-            this._ElementCount = ElementCount;
+
         }
 
         /// <summary>
@@ -107,6 +105,8 @@ namespace XChess
             GL.BufferData(BufferTarget.ArrayBuffer, new IntPtr(_VertexData.Size * VertexData.Count), IntPtr.Zero, BufferUsageHint.StaticDraw);
             GL.BufferData(BufferTarget.ElementArrayBuffer, new IntPtr(sizeof(uint) * Tris.Count), IntPtr.Zero, BufferUsageHint.StaticDraw);
             float* aptr = (float*)GL.MapBuffer(BufferTarget.ArrayBuffer, BufferAccess.WriteOnly);
+            Vector3 boundsmin = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+            Vector3 boundsmax = new Vector3(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
             foreach (_VertexData vd in VertexData)
             {
                 aptr[0] = vd.Norm.X;
@@ -115,6 +115,12 @@ namespace XChess
                 aptr[3] = vd.Pos.X;
                 aptr[4] = vd.Pos.Y;
                 aptr[5] = vd.Pos.Z;
+                boundsmin.X = Math.Min(boundsmin.X, vd.Pos.X);
+                boundsmin.Y = Math.Min(boundsmin.Y, vd.Pos.Y);
+                boundsmin.Z = Math.Min(boundsmin.Z, vd.Pos.Z);
+                boundsmax.X = Math.Max(boundsmax.X, vd.Pos.X);
+                boundsmax.Y = Math.Max(boundsmax.Y, vd.Pos.Y);
+                boundsmax.Z = Math.Max(boundsmax.Z, vd.Pos.Z);
                 aptr += 6;
             }
             GL.UnmapBuffer(BufferTarget.ArrayBuffer);
@@ -125,7 +131,14 @@ namespace XChess
                 eptr++;
             }
             GL.UnmapBuffer(BufferTarget.ElementArrayBuffer);
-            return new Mesh(eid, aid, Tris.Count);
+            return new Mesh()
+            {
+                _ElementCount = Tris.Count,
+                _ArrayID = aid,
+                _ElementID = eid,
+                _BoundsMin = boundsmin,
+                _BoundsMax = boundsmax
+            };
         }
 
         private class _VertexData
@@ -146,6 +159,30 @@ namespace XChess
             GL.DrawElements(BeginMode.Triangles, this._ElementCount, DrawElementsType.UnsignedInt, 0);
         }
 
+        /// <summary>
+        /// Gets the lower corner of the bounding box for this mesh.
+        /// </summary>
+        public Vector3 BoundsMin
+        {
+            get
+            {
+                return this._BoundsMin;
+            }
+        }
+
+        /// <summary>
+        /// Gets the upper corner of the bounding box for this mesh.
+        /// </summary>
+        public Vector3 BoundsMax
+        {
+            get
+            {
+                return this._BoundsMax;
+            }
+        }
+
+        private Vector3 _BoundsMin;
+        private Vector3 _BoundsMax;
         private int _ElementCount;
         private uint _ElementID;
         private uint _ArrayID;
