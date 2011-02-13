@@ -44,4 +44,15 @@ namespace XChess
         /// </summary>
         public Piece NewState;
     }
+
+    /// <summary>
+    /// A move of a pawn that causes another pawn to be taken.
+    /// </summary>
+    public class EnPassantMove : PieceMove
+    {
+        /// <summary>
+        /// The square of the pawn that was captured with this move.
+        /// </summary>
+        public Square Captured;
+    }
 }

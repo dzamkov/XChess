@@ -7,7 +7,7 @@ namespace XChess
     /// Represents the state of one square on the board. Can be replaced with null to indicate the square
     /// is empty.
     /// </summary>
-    public class Piece
+    public abstract class Piece
     {
         /// <summary>
         /// Gets the default state for a pawn.
@@ -76,6 +76,25 @@ namespace XChess
         }
 
         /// <summary>
+        /// Gets the next state of this piece if it doesn't move.
+        /// </summary>
+        public virtual Piece NextIdleState
+        {
+            get
+            {
+                return this;
+            }
+        }
+
+        /// <summary>
+        /// Gets the avaiable moves for this piece if it as on the specified position on the board.
+        /// </summary>
+        public virtual IEnumerable<PieceMove> GetMoves(Board Board, Square Position)
+        {
+            return new PieceMove[0];
+        }
+
+        /// <summary>
         /// Gets the player that owns this piece.
         /// </summary>
         public int Player;
@@ -86,6 +105,103 @@ namespace XChess
     /// </summary>
     public class PawnPiece : Piece
     {
+        public override Piece NextIdleState
+        {
+            get
+            {
+                if (this.EnPassantThreat)
+                {
+                    return new PawnPiece()
+                    {
+                        CanJump = this.CanJump,
+                        EnPassantThreat = false,
+                        Player = this.Player
+                    };
+                }
+                return this;
+            }
+        }
+
+        /// <summary>
+        /// Gets the state of the pawn after a normal (non-jump) move.
+        /// </summary>
+        public PawnPiece AfterMove
+        {
+            get
+            {
+                return new PawnPiece()
+                {
+                    CanJump = false,
+                    EnPassantThreat = false,
+                    Player = this.Player
+                };
+            }
+        }
+
+        public override IEnumerable<PieceMove> GetMoves(Board Board, Square Position)
+        {
+            int movedir = this.Player == 0 ? 1 : -1;
+
+            // Move one square up
+            Square front = Position.Offset(movedir, 0);
+            if (Board.InBoard(front) && Board.GetPiece(front) == null)
+            {
+                yield return PieceMove.Create(Position, front, this.AfterMove);
+            }
+
+            // Attack
+            foreach (Square attacksquare in new Square[]
+                {
+                    Position.Offset(movedir, 1),
+                    Position.Offset(movedir, -1)
+                })
+            {
+                if (Board.InBoard(attacksquare))
+                {
+                    Piece target = Board.GetPiece(attacksquare);
+                    if (target != null && target.Player != this.Player)
+                    {
+                        yield return PieceMove.Create(Position, attacksquare, this.AfterMove);
+                    }
+
+                    // En passant
+                    if (target == null)
+                    {
+                        Square behindattacksquare = attacksquare.Offset(-movedir, 0);
+                        if (Board.InBoard(behindattacksquare))
+                        {
+                            PawnPiece pawntarget = Board.GetPiece(behindattacksquare) as PawnPiece;
+                            if (pawntarget != null && pawntarget.EnPassantThreat)
+                            {
+                                yield return new EnPassantMove()
+                                {
+                                    Source = Position,
+                                    Destination = attacksquare,
+                                    Captured = behindattacksquare,
+                                    NewState = this.AfterMove
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Jump
+            if (this.CanJump)
+            {
+                Square jumpsquare = Position.Offset(movedir * 2, 0);
+                if (Board.InBoard(jumpsquare) && Board.GetPiece(jumpsquare) == null)
+                {
+                    yield return PieceMove.Create(Position, jumpsquare, new PawnPiece()
+                    {
+                        CanJump = false,
+                        EnPassantThreat = true,
+                        Player = this.Player
+                    });
+                }
+            }
+        }
+
         /// <summary>
         /// Can this pawn be taken with en passant the next turn?
         /// </summary>

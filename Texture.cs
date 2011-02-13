@@ -11,7 +11,7 @@ namespace XChess
 {
 
     /// <summary>
-    /// Represents a textured(of any dimension) loaded into graphics memory.
+    /// Represents a textured (of any dimension) loaded into graphics memory.
     /// </summary>
     public class Texture
     {

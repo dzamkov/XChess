@@ -109,6 +109,14 @@ namespace XChess
         }
 
         /// <summary>
+        /// Gets this square with the specified offset applied.
+        /// </summary>
+        public Square Offset(int Rank, int File)
+        {
+            return new Square(this.Rank + Rank, this.File + File);
+        }
+
+        /// <summary>
         /// Gets the X coordinate of the square from white's perspective.
         /// </summary>
         public int X

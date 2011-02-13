@@ -20,6 +20,7 @@ namespace XChess
 
             this._SquaresTexture = Texture.Load(Resources["Textures"]["Squares.png"]);
             this._BoardTexture = Texture.Load(Resources["Textures"]["Board.png"]);
+            this._PawnMesh = Mesh.LoadOBJ(Resources["Models"]["Pawn.obj"]);
         }
 
         /// <summary>
@@ -48,7 +49,7 @@ namespace XChess
             int files = this._CurrentBoard.Files;
 
             // Set up camera
-            Vector3d eyeoffset = new Vector3d(Math.Sin(this._Time) * 20.0, Math.Cos(this._Time) * 20.0, 10.0);
+            Vector3d eyeoffset = new Vector3d(0.0, 20.0, 10.0);
             Vector3d midboard = new Vector3d((double)files * 0.5, (double)ranks * 0.5, 0.0);
             Vector3d up = new Vector3d(0.0, 0.0, 1.0);
 
@@ -69,8 +70,9 @@ namespace XChess
             GL.Light(LightName.Light0, LightParameter.Ambient, new Vector4(0.2f, 0.2f, 0.2f, 1.0f));
             GL.Light(LightName.Light0, LightParameter.Diffuse, new Vector4(0.8f, 0.8f, 0.8f, 1.0f));
             GL.Light(LightName.Light0, LightParameter.Position, new Vector4(5.0f, 3.0f, 4.0f, 0.0f));
+            GL.Light(LightName.Light0, LightParameter.Specular, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
 
-
+            GL.CullFace(CullFaceMode.Back);
             GL.Color4(1.0, 1.0, 1.0, 1.0);
             this._SquaresTexture.Bind2D();
             GL.Begin(BeginMode.Quads);
@@ -94,8 +96,8 @@ namespace XChess
             }
             GL.End();
             this._BoardTexture.Bind2D();
-            double edgedown = 0.3;
-            double edgeout = 0.5;
+            double edgedown = 0.4;
+            double edgeout = 0.2;
             Vector3d[] boardcorners = new Vector3d[]
             {
                 new Vector3d(0.0, 0.0, 0.0),
@@ -117,7 +119,7 @@ namespace XChess
                 Vector3d cb = boardcorners[b];
                 Vector3d cc = boardcorners[b + 4];
                 Vector3d cd = boardcorners[a + 4];
-                GL.Normal3(Vector3d.Cross(cc - ca, cb - ca));
+                GL.Normal3(Vector3d.Normalize(Vector3d.Cross(cc - ca, cb - ca)));
 
                 float len = (float)((ca - cb).Length);
                 GL.TexCoord2(1f, 0f); GL.Vertex3(ca);
@@ -126,12 +128,33 @@ namespace XChess
                 GL.TexCoord2(0f, 0f); GL.Vertex3(cd);
             }
             GL.End();
+            GL.Disable(EnableCap.Texture2D);
+
+            GL.PushMatrix();
+            GL.Translate(0.5, 0.5, 0.0);
+            GL.Scale(0.4, 0.4, 0.4 + Math.Sin(this._Time * 10.0) * 0.2);
+            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Diffuse, new Vector4(0.4f, 0.4f, 0.4f, 1.0f));
+            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(0.6f, 0.6f, 0.6f, 1.0f));
+            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 96);
+            GL.Color4(0.0, 0.0, 0.0, 1.0);
+            this._PawnMesh.Render();
+            GL.PopMatrix();
+
+            GL.PushMatrix();
+            GL.Translate(1.5, 0.5, 0.0);
+            GL.Scale(0.4, 0.4, 0.4 - Math.Sin(this._Time * 10.0) * 0.2);
+            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Diffuse, new Vector4(0.8f, 0.8f, 0.8f, 1.0f));
+            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(0.6f, 0.6f, 0.6f, 1.0f));
+            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 96);
+            GL.Color4(0.8, 0.8, 0.8, 1.0);
+            this._PawnMesh.Render();
+            GL.PopMatrix();
 
             GL.Disable(EnableCap.ColorMaterial);
             GL.Disable(EnableCap.Lighting);
             GL.Disable(EnableCap.DepthTest);
             GL.Disable(EnableCap.CullFace);
-            GL.Disable(EnableCap.Texture2D);
+            
 
 
             GL.PopMatrix();
@@ -140,9 +163,10 @@ namespace XChess
 
         public override void Update(GUIControlContext Context, double Time)
         {
-            this._Time += Time * 0.2;
+            this._Time += Time;
         }
 
+        private Mesh _PawnMesh;
         private Texture _SquaresTexture;
         private Texture _BoardTexture;
         private double _Time;
