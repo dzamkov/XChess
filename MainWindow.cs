@@ -19,15 +19,8 @@ namespace XChess
             this.VSync = VSyncMode.Off;
 
             Board board = Board.Initial;
-            this.Control = this._LayerContainer = new LayerContainer(new BoardView(board).WithBorder(3.0).WithCenterAlign(new Point(800.0, 800.0)));
+            this.Control = this._LayerContainer = new LayerContainer((this._View = new BoardView(board)));
             this.WindowState = WindowState.Maximized;
-        }
-
-        protected override void OnRenderFrame(FrameEventArgs e)
-        {
-            GL.Clear(ClearBufferMask.DepthBufferBit);
-            GL.MatrixMode(MatrixMode.Projection);
-            base.OnRenderFrame(e);
         }
 
         /// <summary>
@@ -38,6 +31,7 @@ namespace XChess
             new MainWindow().Run(120.0);
         }
 
+        private BoardView _View;
         private LayerContainer _LayerContainer;
     }
 }

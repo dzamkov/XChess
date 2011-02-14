@@ -57,8 +57,8 @@ namespace XChess
                     for (int t = 0; t < verts.Length - 2; t++)
                     {
                         tridata.Add(verts[0]);
-                        tridata.Add(verts[t + 1]);
                         tridata.Add(verts[t + 2]);
+                        tridata.Add(verts[t + 1]);
                     }
                 }
             }
@@ -80,7 +80,7 @@ namespace XChess
                 _VertexData ad = VertexData[(int)a];
                 _VertexData bd = VertexData[(int)b];
                 _VertexData cd = VertexData[(int)c];
-                Vector3 norm = Vector3.Normalize(Vector3.Cross(cd.Pos - ad.Pos, bd.Pos - ad.Pos));
+                Vector3 norm = Vector3.Normalize(Vector3.Cross(bd.Pos - ad.Pos, cd.Pos - ad.Pos));
                 ad.Norm += norm;
                 bd.Norm += norm;
                 cd.Norm += norm;

@@ -64,33 +64,64 @@ namespace XChess
             }
         }
 
+        /// <summary>
+        /// Gets the current projection matrix for the view.
+        /// </summary>
+        public Matrix4d ProjectionMatrix
+        {
+            get
+            {
+                Vector3d up = new Vector3d(0.0, 0.0, 1.0);
+
+                Matrix4d proj = Matrix4d.CreatePerspectiveFieldOfView(Math.Sin(Math.PI / 8.0), this.Size.AspectRatio, 0.1, 100.0);
+                Matrix4d view = Matrix4d.LookAt(this.EyePosition, this.LookAtPosition, up);
+                return view * proj;
+            }
+        }
+
+        /// <summary>
+        /// Gets the position the player is looking from.
+        /// </summary>
+        public Vector3d EyePosition
+        {
+            get
+            {
+                return this.LookAtPosition + new Vector3d(20.0 * Math.Sin(this._Time), 20.0 * Math.Cos(this._Time), 20.0);
+            }
+        }
+
+        /// <summary>
+        /// Gets where the player is looking to.
+        /// </summary>
+        public Vector3d LookAtPosition
+        {
+            get
+            {
+                int ranks = this._CurrentBoard.Ranks;
+                int files = this._CurrentBoard.Files;
+                return new Vector3d((double)files * 0.5, (double)ranks * 0.5, 0.0);
+            }
+        }
+
         public override void SetupProjection(Point Viewsize)
         {
-            int ranks = this._CurrentBoard.Ranks;
-            int files = this._CurrentBoard.Files;
-
-            Vector3d eyeoffset = new Vector3d(20.0 * Math.Sin(this._Time), 20.0 * Math.Cos(this._Time), 20.0);
-            Vector3d midboard = new Vector3d((double)files * 0.5, (double)ranks * 0.5, 0.0);
-            Vector3d up = new Vector3d(0.0, 0.0, 1.0);
-
-            Matrix4d proj = Matrix4d.CreatePerspectiveFieldOfView(0.7, Viewsize.AspectRatio, 0.1, 100.0);
-            GL.MultMatrix(ref proj);
-            Matrix4d view = Matrix4d.LookAt(eyeoffset + midboard, midboard, up);
+            Matrix4d view = this.ProjectionMatrix;
             GL.MultMatrix(ref view);
         }
 
         public override void RenderScene()
         {
+            GL.LoadIdentity();
+
             // Draw board
             GL.Enable(EnableCap.CullFace);
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Lighting);
             GL.Enable(EnableCap.ColorMaterial);
-            GL.CullFace(CullFaceMode.Back);
 
 
             GL.Enable(EnableCap.Light0);
-            GL.Light(LightName.Light0, LightParameter.Position, new Vector4(1.0f, 0.8f, 1.0f, 0.0f));
+            GL.Light(LightName.Light0, LightParameter.Position, new Vector4(1.0f, 1.0f, 1.0f, 0.0f));
             GL.Light(LightName.Light0, LightParameter.Ambient, new Vector4(0.3f, 0.3f, 0.3f, 1.0f));
             this._DrawBoard();
 
@@ -98,8 +129,7 @@ namespace XChess
             GL.Enable(EnableCap.Normalize);
 
             GL.ColorMaterial(MaterialFace.FrontAndBack, ColorMaterialParameter.Diffuse);
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.LoadIdentity();
+            
             foreach (PieceVisual pv in this._Visuals)
             {
                 GL.PushMatrix();
@@ -121,7 +151,6 @@ namespace XChess
             GL.Enable(EnableCap.Texture2D);
             GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
             GL.ColorMaterial(MaterialFace.FrontAndBack, ColorMaterialParameter.AmbientAndDiffuse);
-
             
             this._SquaresTexture.Bind2D();
             GL.Begin(BeginMode.Quads);
@@ -147,9 +176,9 @@ namespace XChess
                     double qyy = qy + 1.0;
                     GL.Normal3(new Vector3d(0.0, 0.0, 1.0));
                     GL.TexCoord2(texadd, 0f); GL.Vertex2(qx, qy);
-                    GL.TexCoord2(texadd, texh); GL.Vertex2(qx, qyy);
-                    GL.TexCoord2(texw + texadd, texh); GL.Vertex2(qxx, qyy);
                     GL.TexCoord2(texw + texadd, 0f); GL.Vertex2(qxx, qy);
+                    GL.TexCoord2(texw + texadd, texh); GL.Vertex2(qxx, qyy);
+                    GL.TexCoord2(texadd, texh); GL.Vertex2(qx, qyy);
                 }
             }
             GL.End();
@@ -183,9 +212,9 @@ namespace XChess
 
                 float len = (float)((ca - cb).Length);
                 GL.TexCoord2(1f, 0f); GL.Vertex3(ca);
-                GL.TexCoord2(1f, len); GL.Vertex3(cb);
-                GL.TexCoord2(0f, len); GL.Vertex3(cc);
                 GL.TexCoord2(0f, 0f); GL.Vertex3(cd);
+                GL.TexCoord2(0f, len); GL.Vertex3(cc);
+                GL.TexCoord2(1f, len); GL.Vertex3(cb);
             }
             GL.End();
             GL.Disable(EnableCap.Texture2D);
@@ -194,8 +223,28 @@ namespace XChess
         public override void Update(GUIControlContext Context, double Time)
         {
             this._Time += Time * 0.2;
+
+            MouseState ms = Context.MouseState;
+            if (ms != null)
+            {
+                this._MouseRay = this.UnprojectRay(ms.Position);
+            }
         }
 
+        /// <summary>
+        /// Gets the direction of the ray projected from the specified point on the control. Note that the ray starts at EyePosition.
+        /// </summary>
+        public Vector3d UnprojectRay(Point Pos)
+        {
+            Point size = this.Size;
+            Matrix4d iproj = Matrix4d.Invert(this.ProjectionMatrix);
+            Vector4d point = new Vector4d(0.5 -  (Pos.X / size.X), 0.5 - (Pos.Y / size.Y), 0.995, 1.0);
+            Vector4d res;
+            Vector4d.Transform(ref point, ref iproj, out res);
+            return Vector3d.Normalize(new Vector3d(res.X / res.W, res.Y / res.W, res.Z / res.W) - this.EyePosition);
+        }
+
+        private Vector3d _MouseRay;
         private double _Time;
         private Texture _SquaresTexture;
         private Texture _BoardTexture;
@@ -214,6 +263,8 @@ namespace XChess
             this.State = State;
             this.Mesh = State.DisplayMesh;
         }
+
+
 
         /// <summary>
         /// Renders the visual.
