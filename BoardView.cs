@@ -151,7 +151,9 @@ namespace XChess
             GL.Enable(EnableCap.Texture2D);
             GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
             GL.ColorMaterial(MaterialFace.FrontAndBack, ColorMaterialParameter.AmbientAndDiffuse);
-            
+
+            GL.Translate(this.EyePosition + this._MouseRay * 20.0);
+
             this._SquaresTexture.Bind2D();
             GL.Begin(BeginMode.Quads);
             for (int x = 0; x < files; x++)
@@ -238,7 +240,7 @@ namespace XChess
         {
             Point size = this.Size;
             Matrix4d iproj = Matrix4d.Invert(this.ProjectionMatrix);
-            Vector4d point = new Vector4d(0.5 -  (Pos.X / size.X), 0.5 - (Pos.Y / size.Y), 0.995, 1.0);
+            Vector4d point = new Vector4d(-1.0 + 2.0 * (Pos.X / size.X), 1.0 - 2.0 *(Pos.Y / size.Y), 0.995, 1.0);
             Vector4d res;
             Vector4d.Transform(ref point, ref iproj, out res);
             return Vector3d.Normalize(new Vector3d(res.X / res.W, res.Y / res.W, res.Z / res.W) - this.EyePosition);
