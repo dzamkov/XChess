@@ -181,6 +181,14 @@ namespace XChess
             }
         }
 
+        /// <summary>
+        /// Converts a float vector into a double vector,
+        /// </summary>
+        public static Vector3d FloatToDouble(Vector3 Vector)
+        {
+            return new Vector3d(Vector.X, Vector.Y, Vector.Z);
+        }
+
         private Vector3 _BoundsMin;
         private Vector3 _BoundsMax;
         private int _ElementCount;

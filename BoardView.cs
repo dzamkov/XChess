@@ -86,7 +86,7 @@ namespace XChess
         {
             get
             {
-                return this.LookAtPosition + new Vector3d(20.0 * Math.Sin(this._Time), 20.0 * Math.Cos(this._Time), 20.0);
+                return this.LookAtPosition + new Vector3d(20.0 * Math.Sin(this._Time), 20.0 * Math.Cos(this._Time), 15.0);
             }
         }
 
@@ -101,6 +101,14 @@ namespace XChess
                 int files = this._CurrentBoard.Files;
                 return new Vector3d((double)files * 0.5, (double)ranks * 0.5, 0.0);
             }
+        }
+
+        /// <summary>
+        /// Gets the color of a square on the board.
+        /// </summary>
+        public virtual Color GetSquareColor(Square Square)
+        {
+            return Color.RGB(0.8, 0.8, 0.8);
         }
 
         public override void SetupProjection(Point Viewsize)
@@ -132,9 +140,12 @@ namespace XChess
             
             foreach (PieceVisual pv in this._Visuals)
             {
-                GL.PushMatrix();
-                pv.Render();
-                GL.PopMatrix();
+                if (this._MousePiece != pv)
+                {
+                    GL.PushMatrix();
+                    pv.Render();
+                    GL.PopMatrix();
+                }
             }
 
             GL.Disable(EnableCap.Normalize);
@@ -158,15 +169,7 @@ namespace XChess
             {
                 for (int y = 0; y < ranks; y++)
                 {
-                    if (x == 4)
-                    {
-                        GL.Color4(0.5, 2.0, 0.5, 1.0);
-                    }
-                    else
-                    {
-                        GL.Color4(0.8, 0.8, 0.8, 1.0);
-                    }
-
+                    GL.Color4(this.GetSquareColor(new Square(y, x)));
                     const float texw = 0.5f;
                     const float texh = 1.0f;
                     float texadd = ((x + y) % 2 == 0) ? 0.0f : 0.5f;
@@ -222,12 +225,25 @@ namespace XChess
 
         public override void Update(GUIControlContext Context, double Time)
         {
-            this._Time += Time * 0.2;
+            this._Time += Time * 0.002;
 
             MouseState ms = Context.MouseState;
             if (ms != null)
             {
-                this._MouseRay = this.UnprojectRay(ms.Position);
+                Vector3d mouseraydir = this.UnprojectRay(ms.Position);
+                Vector3d mouseraystart = this.EyePosition;
+                this._MousePiece = null;
+                foreach (PieceVisual pv in this._Visuals)
+                {
+                    Matrix4d itrans = pv.Transform;
+                    itrans.Invert();
+                    Vector3d nmouseraydir = Vector3d.TransformNormal(mouseraydir, itrans);
+                    Vector3d nmouseraystart = Vector3d.Transform(mouseraystart, itrans);
+                    if (RayBoxIntersect(nmouseraystart, nmouseraydir, Mesh.FloatToDouble(pv.Mesh.BoundsMin), Mesh.FloatToDouble(pv.Mesh.BoundsMax)))
+                    {
+                        this._MousePiece = pv;
+                    }
+                }
             }
         }
 
@@ -244,7 +260,50 @@ namespace XChess
             return Vector3d.Normalize(new Vector3d(res.X / res.W, res.Y / res.W, res.Z / res.W) - this.EyePosition);
         }
 
-        private Vector3d _MouseRay;
+        /// <summary>
+        /// Gets where (Y, Z) a ray hits the plane at X = 0.
+        /// </summary>
+        public static Vector2d RayPlaneIntersect(Vector3d RayStart, Vector3d RayDir)
+        {
+            double dis = -RayStart.X / RayDir.X;
+            return new Vector2d(RayStart.Y + RayDir.Y * dis, RayStart.Z + RayDir.Z * dis);
+        }
+
+        /// <summary>
+        /// Gets if a ray intersects the given box.
+        /// </summary>
+        public static bool RayBoxIntersect(Vector3d RayStart, Vector3d RayDir, Vector3d BoxMin, Vector3d BoxMax)
+        {
+            Vector3d rs, rd; Vector2d rh;
+
+            rs = new Vector3d(RayStart.X - BoxMax.X, RayStart.Y, RayStart.Z); rd = new Vector3d(RayDir.X, RayDir.Y, RayDir.Z);
+            rh = RayPlaneIntersect(rs, rd);
+            if (rh.X >= BoxMin.Y && rh.X <= BoxMax.Y && rh.Y >= BoxMin.Z && rh.Y <= BoxMax.Z) return true;
+
+            rs = new Vector3d(RayStart.X - BoxMin.X, RayStart.Y, RayStart.Z); rd = new Vector3d(RayDir.X, RayDir.Y, RayDir.Z);
+            rh = RayPlaneIntersect(rs, rd);
+            if (rh.X >= BoxMin.Y && rh.X <= BoxMax.Y && rh.Y >= BoxMin.Z && rh.Y <= BoxMax.Z) return true;
+
+            rs = new Vector3d(RayStart.Y - BoxMax.Y, RayStart.Z, RayStart.X); rd = new Vector3d(RayDir.Y, RayDir.Z, RayDir.X);
+            rh = RayPlaneIntersect(rs, rd);
+            if (rh.X >= BoxMin.Z && rh.X <= BoxMax.Z && rh.Y >= BoxMin.X && rh.Y <= BoxMax.X) return true;
+
+            rs = new Vector3d(RayStart.Y - BoxMin.Y, RayStart.Z, RayStart.X); rd = new Vector3d(RayDir.Y, RayDir.Z, RayDir.X);
+            rh = RayPlaneIntersect(rs, rd);
+            if (rh.X >= BoxMin.Z && rh.X <= BoxMax.Z && rh.Y >= BoxMin.X && rh.Y <= BoxMax.X) return true;
+
+            rs = new Vector3d(RayStart.Z - BoxMax.Z, RayStart.X, RayStart.Y); rd = new Vector3d(RayDir.Z, RayDir.X, RayDir.Y);
+            rh = RayPlaneIntersect(rs, rd);
+            if (rh.X >= BoxMin.X && rh.X <= BoxMax.X && rh.Y >= BoxMin.Y && rh.Y <= BoxMax.Y) return true;
+
+            rs = new Vector3d(RayStart.Z - BoxMin.Z, RayStart.X, RayStart.Y); rd = new Vector3d(RayDir.Z, RayDir.X, RayDir.Y);
+            rh = RayPlaneIntersect(rs, rd);
+            if (rh.X >= BoxMin.X && rh.X <= BoxMax.X && rh.Y >= BoxMin.Y && rh.Y <= BoxMax.Y) return true;
+
+            return false;
+        }
+
+        private PieceVisual _MousePiece;
         private double _Time;
         private Texture _SquaresTexture;
         private Texture _BoardTexture;
@@ -264,7 +323,16 @@ namespace XChess
             this.Mesh = State.DisplayMesh;
         }
 
-
+        /// <summary>
+        /// Gets the transform applied to the mesh to get its visible state.
+        /// </summary>
+        public Matrix4d Transform
+        {
+            get
+            {
+                return Matrix4d.Scale(0.4, 0.4, 0.4) * Matrix4d.CreateTranslation(this.Square.File + 0.5, this.Square.Rank + 0.5, 0.0);
+            }
+        }
 
         /// <summary>
         /// Renders the visual.
@@ -288,8 +356,9 @@ namespace XChess
                     GL.Color4(0.5, 0.5, 0.5, 1.0);
                     
                 }
-                GL.Translate(this.Square.File + 0.5, this.Square.Rank + 0.5, 0.0);
-                GL.Scale(0.4, 0.4, 0.4);
+
+                Matrix4d trans = this.Transform;
+                GL.MultMatrix(ref trans);
                 this.Mesh.Render();
             }
         }
