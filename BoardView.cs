@@ -152,8 +152,6 @@ namespace XChess
             GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
             GL.ColorMaterial(MaterialFace.FrontAndBack, ColorMaterialParameter.AmbientAndDiffuse);
 
-            GL.Translate(this.EyePosition + this._MouseRay * 20.0);
-
             this._SquaresTexture.Bind2D();
             GL.Begin(BeginMode.Quads);
             for (int x = 0; x < files; x++)
@@ -275,7 +273,7 @@ namespace XChess
         {
             if (this.Mesh != null)
             {
-                if (this.State.Player == 0)
+                if (this.State.Player == 1)
                 {
                     GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Ambient, new Vector4(0.1f, 0.1f, 0.1f, 1.0f));
                     GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
