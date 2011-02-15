@@ -66,6 +66,17 @@ namespace XChess
         }
 
         /// <summary>
+        /// Gets if the king of the current player is in check.
+        /// </summary>
+        public bool Check
+        {
+            get
+            {
+                return this.HasThreat(1 - this.PlayerToMove, this.GetKing(this.PlayerToMove));
+            }
+        }
+
+        /// <summary>
         /// Gets the piece at the specified square.
         /// </summary>
         public Piece GetPiece(Square Square)
@@ -164,6 +175,60 @@ namespace XChess
                 }
             }
             return new Square(0, 0);
+        }
+
+        /// <summary>
+        /// Gets the immediate score for the specified player.
+        /// </summary>
+        public double GetScore(int Player)
+        {
+            if (this.Moves.GetEnumerator().MoveNext() == false)
+            {
+                // No moves left!
+                if(this.Check)
+                {
+                    if(this.PlayerToMove == Player)
+                    {
+                        return double.NegativeInfinity;
+                    }
+                    else
+                    {
+                        return double.PositiveInfinity;
+                    }
+                }
+                return 0.0;
+            }
+            return this.GetScoreNormal(Player);
+        }
+
+        /// <summary>
+        /// Gets the immediate score for the specified player assuming that the game is not over.
+        /// </summary>
+        public double GetScoreNormal(int Player)
+        {
+            double total = 0.0;
+            for (int r = 0; r < this.Ranks; r++)
+            {
+                for (int f = 0; f < this.Files; f++)
+                {
+                    Square square = new Square(r, f);
+                    Piece piece = this.GetPiece(square);
+                    if (piece != null)
+                    {
+                        double value = piece.Value;
+                        double spotmultiplier = value * 0.025 + 0.05;
+                        double piecemultiplier = piece.Player == Player ? 1.0 : -1.0;
+                        value *= piecemultiplier;
+                        spotmultiplier *= piecemultiplier;
+                        total += value;
+                        foreach (Square threat in piece.GetThreats(this, square))
+                        {
+                            total += spotmultiplier;
+                        }
+                    }
+                }
+            }
+            return total;
         }
 
         /// <summary>

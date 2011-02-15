@@ -148,6 +148,17 @@ namespace XChess
         }
 
         /// <summary>
+        /// Gets the value of this piece in relation to a pawn.
+        /// </summary>
+        public virtual double Value
+        {
+            get
+            {
+                return 1.0;
+            }
+        }
+
+        /// <summary>
         /// Gets if this piece (which moves and attacks normally) can move to or attack the specified tile.
         /// </summary>
         public bool CanMove(Board Board, Square Position)
@@ -188,6 +199,14 @@ namespace XChess
                     };
                 }
                 return this;
+            }
+        }
+
+        public override double Value
+        {
+            get
+            {
+                return 1.0;
             }
         }
 
@@ -325,6 +344,14 @@ namespace XChess
             }
         }
 
+        public override double Value
+        {
+            get
+            {
+                return 5.0;
+            }
+        }
+
         /// <summary>
         /// Can this rook castle eventually?
         /// </summary>
@@ -363,6 +390,14 @@ namespace XChess
             }
         }
 
+        public override double Value
+        {
+            get
+            {
+                return 9.0;
+            }
+        }
+
         public override Mesh DisplayMesh
         {
             get
@@ -390,6 +425,14 @@ namespace XChess
                         yield return Position.Offset(r, f);
                     }
                 }
+            }
+        }
+
+        public override double Value
+        {
+            get
+            {
+                return 5.0;
             }
         }
 
@@ -429,6 +472,14 @@ namespace XChess
             };
         }
 
+        public override double Value
+        {
+            get
+            {
+                return 3.0;
+            }
+        }
+
         public override Mesh DisplayMesh
         {
             get
@@ -455,6 +506,14 @@ namespace XChess
                 {
                     yield return threat;
                 }
+            }
+        }
+
+        public override double Value
+        {
+            get
+            {
+                return 3.0;
             }
         }
 

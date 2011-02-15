@@ -97,6 +97,21 @@ namespace XChess
         {
             this._Moves = new List<KeyValuePair<Move, Board>>(NewBoard.Moves);
             this._Selection = null;
+
+            if (this._ScoreSample != null)
+            {
+                this._ScoreSample.Dispose();
+                this._ScoreSample = null;
+            }
+        }
+
+        public override void OverRender(GUIRenderContext Context)
+        {
+            if (this._ScoreSample == null)
+            {
+                this._ScoreSample = Font.Default.CreateSample(this.Board.GetScore(0).ToString());
+            }
+            Context.DrawText(Color.RGB(0.0, 0.0, 0.0), this._ScoreSample, new Point(10.0, 10.0));
         }
 
         /// <summary>
@@ -133,6 +148,7 @@ namespace XChess
             }
         }
 
+        private TextSample _ScoreSample;
         private _SelectionInfo _Selection;
         private List<KeyValuePair<Move, Board>> _Moves;
         private int _Player;
