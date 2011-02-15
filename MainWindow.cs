@@ -19,7 +19,7 @@ namespace XChess
             this.VSync = VSyncMode.Off;
 
             Board board = Board.Initial;
-            this.Control = this._LayerContainer = new LayerContainer((this._View = new BoardView(board)));
+            this.Control = this._LayerContainer = new LayerContainer((this._View = new PlayerBoardView(board, 0)));
             this.WindowState = WindowState.Maximized;
         }
 
@@ -31,7 +31,7 @@ namespace XChess
             new MainWindow().Run(120.0);
         }
 
-        private BoardView _View;
+        private PlayerBoardView _View;
         private LayerContainer _LayerContainer;
     }
 }

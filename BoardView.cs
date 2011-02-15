@@ -86,7 +86,7 @@ namespace XChess
         {
             get
             {
-                return this.LookAtPosition + new Vector3d(20.0 * Math.Sin(this._Time), 20.0 * Math.Cos(this._Time), 15.0);
+                return this.LookAtPosition + new Vector3d(20.0 * Math.Sin(this._Time), -20.0 * Math.Cos(this._Time), 15.0);
             }
         }
 
@@ -108,16 +108,32 @@ namespace XChess
         /// </summary>
         public virtual Color GetSquareColor(Square Square)
         {
-            return Color.RGB(0.8, 0.8, 0.8);
+            if ((Square.File + Square.Rank) % 2 == 0)
+            {
+                return Color.RGB(0.8, 0.7, 0.5);
+            }
+            else
+            {
+                return Color.RGB(0.8, 0.8, 0.8);
+            }
         }
 
-        public override void SetupProjection(Point Viewsize)
+        /// <summary>
+        /// Called when a square (or the piece on a square) of the board is clicked.
+        /// </summary>
+        /// <param name="Primary">Gets if the square was clicked with the primary mouse button.</param>
+        protected virtual void OnSquareClick(Square Square, bool Primary)
+        {
+
+        }
+
+        public sealed override void SetupProjection(Point Viewsize)
         {
             Matrix4d view = this.ProjectionMatrix;
             GL.MultMatrix(ref view);
         }
 
-        public override void RenderScene()
+        public sealed override void RenderScene()
         {
             GL.LoadIdentity();
 
@@ -129,7 +145,7 @@ namespace XChess
 
 
             GL.Enable(EnableCap.Light0);
-            GL.Light(LightName.Light0, LightParameter.Position, new Vector4(1.0f, 1.0f, 1.0f, 0.0f));
+            GL.Light(LightName.Light0, LightParameter.Position, new Vector4(1.0f, -1.0f, 1.0f, 0.0f));
             GL.Light(LightName.Light0, LightParameter.Ambient, new Vector4(0.3f, 0.3f, 0.3f, 1.0f));
             this._DrawBoard();
 
@@ -140,12 +156,9 @@ namespace XChess
             
             foreach (PieceVisual pv in this._Visuals)
             {
-                if (this._MousePiece != pv)
-                {
-                    GL.PushMatrix();
-                    pv.Render();
-                    GL.PopMatrix();
-                }
+                GL.PushMatrix();
+                pv.Render();
+                GL.PopMatrix();
             }
 
             GL.Disable(EnableCap.Normalize);
@@ -169,19 +182,16 @@ namespace XChess
             {
                 for (int y = 0; y < ranks; y++)
                 {
-                    GL.Color4(this.GetSquareColor(new Square(y, x)));
-                    const float texw = 0.5f;
-                    const float texh = 1.0f;
-                    float texadd = ((x + y) % 2 == 0) ? 0.0f : 0.5f;
+                    this.GetSquareColor(new Square(y, x)).Render();
                     double qx = x;
                     double qy = y;
                     double qxx = qx + 1.0;
                     double qyy = qy + 1.0;
                     GL.Normal3(new Vector3d(0.0, 0.0, 1.0));
-                    GL.TexCoord2(texadd, 0f); GL.Vertex2(qx, qy);
-                    GL.TexCoord2(texw + texadd, 0f); GL.Vertex2(qxx, qy);
-                    GL.TexCoord2(texw + texadd, texh); GL.Vertex2(qxx, qyy);
-                    GL.TexCoord2(texadd, texh); GL.Vertex2(qx, qyy);
+                    GL.TexCoord2(0f, 0f); GL.Vertex2(qx, qy);
+                    GL.TexCoord2(1f, 0f); GL.Vertex2(qxx, qy);
+                    GL.TexCoord2(1f, 1f); GL.Vertex2(qxx, qyy);
+                    GL.TexCoord2(0f, 1f); GL.Vertex2(qx, qyy);
                 }
             }
             GL.End();
@@ -230,18 +240,67 @@ namespace XChess
             MouseState ms = Context.MouseState;
             if (ms != null)
             {
-                Vector3d mouseraydir = this.UnprojectRay(ms.Position);
-                Vector3d mouseraystart = this.EyePosition;
-                this._MousePiece = null;
-                foreach (PieceVisual pv in this._Visuals)
+                // Test for click
+                bool primary = false;
+                bool click = false;
+                if (ms.HasPushedButton(OpenTK.Input.MouseButton.Left))
                 {
-                    Matrix4d itrans = pv.Transform;
-                    itrans.Invert();
-                    Vector3d nmouseraydir = Vector3d.TransformNormal(mouseraydir, itrans);
-                    Vector3d nmouseraystart = Vector3d.Transform(mouseraystart, itrans);
-                    if (RayBoxIntersect(nmouseraystart, nmouseraydir, Mesh.FloatToDouble(pv.Mesh.BoundsMin), Mesh.FloatToDouble(pv.Mesh.BoundsMax)))
+                    if (Context.SimpleKeyboardState.IsKeyDown(OpenTK.Input.Key.ControlLeft))
                     {
-                        this._MousePiece = pv;
+                        primary = false;
+                    }
+                    else
+                    {
+                        primary = true;
+                    }
+                    click = true;
+                }
+                if (ms.HasPushedButton(OpenTK.Input.MouseButton.Right))
+                {
+                    primary = false;
+                    click = true;
+                }
+
+                // Click response
+                if (click)
+                {
+                    Vector3d mouseraydir = this.UnprojectRay(ms.Position);
+                    Vector3d mouseraystart = this.EyePosition;
+
+                    
+
+                    // Test if a piece has been clicked
+                    foreach (PieceVisual pv in this._Visuals)
+                    {
+                        Matrix4d itrans = pv.Transform;
+                        itrans.Invert();
+                        Vector3d nmouseraydir = Vector3d.TransformNormal(mouseraydir, itrans);
+                        Vector3d nmouseraystart = Vector3d.Transform(mouseraystart, itrans);
+                        if (RayBoxIntersect(nmouseraystart, nmouseraydir, Mesh.FloatToDouble(pv.Mesh.BoundsMin) * 0.9f, Mesh.FloatToDouble(pv.Mesh.BoundsMax) * 0.9f))
+                        {
+                            // Mouse clicked on piece
+                            this.OnSquareClick(pv.Square, primary);
+                            click = false;
+                        }
+                    }
+
+                    // Test if the board has been clicked
+                    if (click)
+                    {
+                        Vector2d boardhit = RayPlaneIntersect(
+                            new Vector3d(mouseraystart.Z, mouseraystart.X, mouseraystart.Y),
+                            new Vector3d(mouseraydir.Z, mouseraydir.X, mouseraydir.Y));
+                        if (boardhit.X >= 0.0 && boardhit.Y >= 0.0)
+                        {
+                            int ranks = this._CurrentBoard.Ranks;
+                            int files = this._CurrentBoard.Files;
+                            int tr = (int)boardhit.Y;
+                            int tf = (int)boardhit.X;
+                            if (tr < ranks && tf < files)
+                            {
+                                this.OnSquareClick(new Square(tr, tf), primary);
+                            }
+                        }
                     }
                 }
             }
@@ -303,7 +362,6 @@ namespace XChess
             return false;
         }
 
-        private PieceVisual _MousePiece;
         private double _Time;
         private Texture _SquaresTexture;
         private Texture _BoardTexture;
