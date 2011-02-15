@@ -89,6 +89,69 @@ namespace XChess
             return Square.File >= 0 && Square.Rank >= 0 && Square.File < this.Files && Square.Rank < this.Ranks;
         }
 
+        /// <summary>
+        /// Gets all valid moves from this position.
+        /// </summary>
+        public IEnumerable<Move> Moves
+        {
+            get
+            {
+                for (int r = 0; r < this.Ranks; r++)
+                {
+                    for (int f = 0; f < this.Files; f++)
+                    {
+                        Square pos = new Square(r, f);
+
+                        // Piece here?
+                        Piece piece = this.GetPiece(pos);
+                        if (piece != null && piece.Player == this.PlayerToMove)
+                        {
+                            foreach (PieceMove piecemove in piece.GetMoves(this, pos))
+                            {
+                                yield return piecemove;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the next state of the board if the given move (assumed to be valid) is played.
+        /// </summary>
+        public Board GetNext(Move Move)
+        {
+            Board nboard = new Board(this.Ranks, this.Files);
+            nboard.PlayerToMove = 1 - this.PlayerToMove;
+
+            for (int r = 0; r < this.Ranks; r++)
+            {
+                for (int f = 0; f < this.Files; f++)
+                {
+                    Piece cur = this.Pieces[r, f];
+                    if (cur != null)
+                    {
+                        nboard.Pieces[r, f] = cur.NextIdleState;
+                    }
+                }
+            }
+
+            PieceMove pm = Move as PieceMove;
+            if (pm != null)
+            {
+                nboard.SetPiece(pm.Source, null);
+                nboard.SetPiece(pm.Destination, pm.NewState);
+
+                EnPassantMove epm = pm as EnPassantMove;
+                if (epm != null)
+                {
+                    nboard.SetPiece(epm.Captured, null);
+                }
+            }
+
+            return nboard;
+        }
+
         public Piece[,] Pieces;
 
         /// <summary>
@@ -100,7 +163,7 @@ namespace XChess
     /// <summary>
     /// References a square on the board.
     /// </summary>
-    public struct Square
+    public struct Square : IEquatable<Square>
     {
         public Square(int Rank, int File)
         {
@@ -145,8 +208,38 @@ namespace XChess
         {
             get
             {
-                return ((char)(this.File + 97)) + this.Rank.ToString();
+                return ((char)(this.File + 97)) + (this.Rank + 1).ToString();
             }
+        }
+
+        public override bool Equals(object obj)
+        {
+            Square? sqr = obj as Square?;
+            if (sqr != null)
+            {
+                return this == sqr.Value;
+            }
+            return false;
+        }
+
+        public bool Equals(Square Square)
+        {
+            return this == Square;
+        }
+
+        public override int GetHashCode()
+        {
+            return this.Rank ^ (this.File + int.MinValue);
+        }
+
+        public static bool operator ==(Square A, Square B)
+        {
+            return A.Rank == B.Rank && A.File == B.File;
+        }
+
+        public static bool operator !=(Square A, Square B)
+        {
+            return A.Rank != B.Rank || A.File != B.File;
         }
 
         /// <summary>

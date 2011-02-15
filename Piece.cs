@@ -106,6 +106,22 @@ namespace XChess
         }
 
         /// <summary>
+        /// Gets if this piece (which moves and attacks normally) can move to or attack the specified tile.
+        /// </summary>
+        public bool CanMove(Board Board, Square Position)
+        {
+            if (Board.InBoard(Position))
+            {
+                Piece piece = Board.GetPiece(Position);
+                if (piece == null || piece.Player != this.Player)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
         /// Gets the player that owns this piece.
         /// </summary>
         public int Player;
@@ -154,9 +170,11 @@ namespace XChess
             int movedir = this.Player == 0 ? 1 : -1;
 
             // Move one square up
+            bool jumpclear = false;
             Square front = Position.Offset(movedir, 0);
             if (Board.InBoard(front) && Board.GetPiece(front) == null)
             {
+                jumpclear = true;
                 yield return PieceMove.Create(Position, front, this.AfterMove);
             }
 
@@ -198,7 +216,7 @@ namespace XChess
             }
 
             // Jump
-            if (this.CanJump)
+            if (this.CanJump && jumpclear)
             {
                 Square jumpsquare = Position.Offset(movedir * 2, 0);
                 if (Board.InBoard(jumpsquare) && Board.GetPiece(jumpsquare) == null)
@@ -278,6 +296,23 @@ namespace XChess
     /// </summary>
     public class KingPiece : Piece
     {
+        public override IEnumerable<PieceMove> GetMoves(Board Board, Square Position)
+        {
+            for (int r = -1; r < 2; r++)
+            {
+                for (int f = -1; f < 2; f++)
+                {
+                    if (r != 0 || f != 0)
+                    {
+                        Square pos = Position.Offset(r, f);
+                        if (this.CanMove(Board, pos))
+                        {
+                            yield return PieceMove.Create(Position, pos, this);
+                        }
+                    }
+                }
+            }
+        }
 
         /// <summary>
         /// Can this king castle eventually?
@@ -300,6 +335,28 @@ namespace XChess
     /// </summary>
     public class KnightPiece : Piece
     {
+        public override IEnumerable<PieceMove> GetMoves(Board Board, Square Position)
+        {
+            int[] movetable = new int[]
+            {
+                2, -1,
+                2, 1,
+                -2, -1,
+                -2, 1,
+                1, -2,
+                1, 2,
+                -1, -2,
+                -1, 2
+            };
+            for (int t = 0; t < 8; t++)
+            {
+                Square pos = Position.Offset(movetable[t * 2 + 0], movetable[t * 2 + 1]);
+                if (this.CanMove(Board, pos))
+                {
+                    yield return PieceMove.Create(Position, pos, this);
+                }
+            }
+        }
 
         public override Mesh DisplayMesh
         {

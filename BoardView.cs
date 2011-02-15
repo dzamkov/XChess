@@ -23,6 +23,7 @@ namespace XChess
             this._BoardTexture = Texture.Load(resources["Textures"]["Board.png"]);
 
             this._SetupVisuals();
+            this.OnBoardChange(Board);
         }
 
         /// <summary>
@@ -38,7 +39,16 @@ namespace XChess
             {
                 this._CurrentBoard = value;
                 this._SetupVisuals();
+                this.OnBoardChange(value);
             }
+        }
+
+        /// <summary>
+        /// Issues a move to the board.
+        /// </summary>
+        public void IssueMove(Move Move, Board NewBoard)
+        {
+            this.Board = NewBoard;
         }
 
         /// <summary>
@@ -86,7 +96,7 @@ namespace XChess
         {
             get
             {
-                return this.LookAtPosition + new Vector3d(20.0 * Math.Sin(this._Time), -20.0 * Math.Cos(this._Time), 15.0);
+                return this.LookAtPosition + new Vector3d(0.0, -15.0, 15.0);
             }
         }
 
@@ -110,11 +120,11 @@ namespace XChess
         {
             if ((Square.File + Square.Rank) % 2 == 0)
             {
-                return Color.RGB(0.8, 0.7, 0.5);
+                return Color.RGB(0.7, 0.5, 0.4);
             }
             else
             {
-                return Color.RGB(0.8, 0.8, 0.8);
+                return Color.RGB(0.7, 0.7, 0.7);
             }
         }
 
@@ -123,6 +133,14 @@ namespace XChess
         /// </summary>
         /// <param name="Primary">Gets if the square was clicked with the primary mouse button.</param>
         protected virtual void OnSquareClick(Square Square, bool Primary)
+        {
+
+        }
+
+        /// <summary>
+        /// Called when the displayed board is changed, either by the Board property or by issuing a move.
+        /// </summary>
+        protected virtual void OnBoardChange(Board NewBoard)
         {
 
         }
@@ -145,7 +163,7 @@ namespace XChess
 
 
             GL.Enable(EnableCap.Light0);
-            GL.Light(LightName.Light0, LightParameter.Position, new Vector4(1.0f, -1.0f, 1.0f, 0.0f));
+            GL.Light(LightName.Light0, LightParameter.Position, new Vector4(0.4f, -1.0f, 0.9f, 0.0f));
             GL.Light(LightName.Light0, LightParameter.Ambient, new Vector4(0.3f, 0.3f, 0.3f, 1.0f));
             this._DrawBoard();
 
@@ -235,8 +253,6 @@ namespace XChess
 
         public override void Update(GUIControlContext Context, double Time)
         {
-            this._Time += Time * 0.002;
-
             MouseState ms = Context.MouseState;
             if (ms != null)
             {
@@ -362,7 +378,6 @@ namespace XChess
             return false;
         }
 
-        private double _Time;
         private Texture _SquaresTexture;
         private Texture _BoardTexture;
         private List<PieceVisual> _Visuals;
@@ -404,7 +419,7 @@ namespace XChess
                     GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Ambient, new Vector4(0.1f, 0.1f, 0.1f, 1.0f));
                     GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
                     GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 32);
-                    GL.Color4(0.0, 0.0, 0.0, 1.0);
+                    GL.Color4(0.1, 0.1, 0.1, 1.0);
                 }
                 else
                 {
