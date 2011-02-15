@@ -91,7 +91,49 @@ namespace XChess
         /// </summary>
         public virtual IEnumerable<PieceMove> GetMoves(Board Board, Square Position)
         {
-            return new PieceMove[0];
+            foreach (Square s in this.GetThreats(Board, Position))
+            {
+                if (this.CanMove(Board, s))
+                {
+                    yield return PieceMove.Create(Position, s, this.NextIdleState);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the squares this piece is attacking. (That is, if a piece is on one of the squares, it can be taken).
+        /// </summary>
+        public virtual IEnumerable<Square> GetThreats(Board Board, Square Position)
+        {
+            return new Square[0];
+        }
+
+        /// <summary>
+        /// Gets the threats a piece with the specified parameters can make along the given ray defined by its delta and current offsets.
+        /// </summary>
+        public static IEnumerable<Square> GetRayThreats(int Player, int DR, int DF, int CR, int CF, Board Board, Square Position)
+        {
+            while (true)
+            {
+                Square pos = Position.Offset(CR, CF);
+                if (Board.InBoard(pos))
+                {
+                    Piece piece = Board.GetPiece(pos);
+                    if (piece == null)
+                    {
+                        CR += DR;
+                        CF += DF;
+                        yield return pos;
+                        continue;
+                    }
+                    if (piece.Player != Player)
+                    {
+                        yield return pos;
+                        break;
+                    }
+                }
+                break;
+            }
         }
 
         /// <summary>
@@ -231,6 +273,16 @@ namespace XChess
             }
         }
 
+        public override IEnumerable<Square> GetThreats(Board Board, Square Position)
+        {
+            int movedir = this.Player == 0 ? 1 : -1;
+            return new Square[]
+            {
+                Position.Offset(movedir, 1),
+                Position.Offset(movedir, -1)
+            };
+        }
+
         /// <summary>
         /// Can this pawn be taken with en passant the next turn?
         /// </summary>
@@ -257,6 +309,21 @@ namespace XChess
     /// </summary>
     public class RookPiece : Piece
     {
+        public override IEnumerable<Square> GetThreats(Board Board, Square Position)
+        {
+            int dx = 1;
+            int dy = 0;
+            for (int t = 0; t < 4; t++)
+            {
+                foreach (Square threat in GetRayThreats(this.Player, dx, dy, dx, dy, Board, Position))
+                {
+                    yield return threat;
+                }
+                int temp = dy;
+                dy = -dx;
+                dx = temp;
+            }
+        }
 
         /// <summary>
         /// Can this rook castle eventually?
@@ -279,6 +346,22 @@ namespace XChess
     /// </summary>
     public class QueenPiece : Piece
     {
+        public override IEnumerable<Square> GetThreats(Board Board, Square Position)
+        {
+            for (int r = -1; r < 2; r++)
+            {
+                for (int f = -1; f < 2; f++)
+                {
+                    if (r != 0 || f != 0)
+                    {
+                        foreach (Square threat in GetRayThreats(this.Player, r, f, r, f, Board, Position))
+                        {
+                            yield return threat;
+                        }
+                    }
+                }
+            }
+        }
 
         public override Mesh DisplayMesh
         {
@@ -296,7 +379,7 @@ namespace XChess
     /// </summary>
     public class KingPiece : Piece
     {
-        public override IEnumerable<PieceMove> GetMoves(Board Board, Square Position)
+        public override IEnumerable<Square> GetThreats(Board Board, Square Position)
         {
             for (int r = -1; r < 2; r++)
             {
@@ -304,11 +387,7 @@ namespace XChess
                 {
                     if (r != 0 || f != 0)
                     {
-                        Square pos = Position.Offset(r, f);
-                        if (this.CanMove(Board, pos))
-                        {
-                            yield return PieceMove.Create(Position, pos, this);
-                        }
+                        yield return Position.Offset(r, f);
                     }
                 }
             }
@@ -335,27 +414,19 @@ namespace XChess
     /// </summary>
     public class KnightPiece : Piece
     {
-        public override IEnumerable<PieceMove> GetMoves(Board Board, Square Position)
+        public override IEnumerable<Square> GetThreats(Board Board, Square Position)
         {
-            int[] movetable = new int[]
+            return new Square[]
             {
-                2, -1,
-                2, 1,
-                -2, -1,
-                -2, 1,
-                1, -2,
-                1, 2,
-                -1, -2,
-                -1, 2
+                Position.Offset(2, 1),
+                Position.Offset(2, -1),
+                Position.Offset(-2, 1),
+                Position.Offset(-2, -1),
+                Position.Offset(1, 2),
+                Position.Offset(1, -2),
+                Position.Offset(-1, 2),
+                Position.Offset(-1, -2),
             };
-            for (int t = 0; t < 8; t++)
-            {
-                Square pos = Position.Offset(movetable[t * 2 + 0], movetable[t * 2 + 1]);
-                if (this.CanMove(Board, pos))
-                {
-                    yield return PieceMove.Create(Position, pos, this);
-                }
-            }
         }
 
         public override Mesh DisplayMesh
@@ -374,6 +445,18 @@ namespace XChess
     /// </summary>
     public class BishopPiece : Piece
     {
+        public override IEnumerable<Square> GetThreats(Board Board, Square Position)
+        {
+            for (int t = 0; t < 4; t++)
+            {
+                int dx = t < 2 ? -1 : 1;
+                int dy = (t % 2) < 1 ? -1 : 1;
+                foreach (Square threat in GetRayThreats(this.Player, dx, dy, dx, dy, Board, Position))
+                {
+                    yield return threat;
+                }
+            }
+        }
 
         public override Mesh DisplayMesh
         {
