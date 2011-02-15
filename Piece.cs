@@ -126,11 +126,8 @@ namespace XChess
                         yield return pos;
                         continue;
                     }
-                    if (piece.Player != Player)
-                    {
-                        yield return pos;
-                        break;
-                    }
+                    yield return pos;
+                    break;
                 }
                 break;
             }
