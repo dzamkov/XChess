@@ -90,9 +90,9 @@ namespace XChess
         }
 
         /// <summary>
-        /// Gets all valid moves from this position.
+        /// Gets all valid moves (and the corresponding boards they produce) from this board.
         /// </summary>
-        public IEnumerable<Move> Moves
+        public IEnumerable<KeyValuePair<Move, Board>> Moves
         {
             get
             {
@@ -108,12 +108,62 @@ namespace XChess
                         {
                             foreach (PieceMove piecemove in piece.GetMoves(this, pos))
                             {
-                                yield return piecemove;
+                                Board next = this.GetNext(piecemove);
+                                if (!next.HasThreat(1 - this.PlayerToMove, next.GetKing(this.PlayerToMove)))
+                                {
+                                    yield return new KeyValuePair<Move, Board>(piecemove, next);
+                                }
                             }
                         }
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Gets if the specified player has a piece that threatens the given position.
+        /// </summary>
+        public bool HasThreat(int Player, Square Position)
+        {
+            for (int r = 0; r < this.Ranks; r++)
+            {
+                for (int f = 0; f < this.Files; f++)
+                {
+                    Square square = new Square(r, f);
+                    Piece piece = this.GetPiece(square);
+                    if (piece != null && piece.Player == Player)
+                    {
+                        foreach (Square threat in piece.GetThreats(this, square))
+                        {
+                            if (threat == Position)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Gets the position of the king for the specified player.
+        /// </summary>
+        public Square GetKing(int Player)
+        {
+            for (int r = 0; r < this.Ranks; r++)
+            {
+                for (int f = 0; f < this.Files; f++)
+                {
+                    Square square = new Square(r, f);
+                    KingPiece piece = this.GetPiece(square) as KingPiece;
+                    if (piece != null && piece.Player == Player)
+                    {
+                        return square;
+                    }
+                }
+            }
+            return new Square(0, 0);
         }
 
         /// <summary>

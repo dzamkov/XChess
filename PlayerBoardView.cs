@@ -54,9 +54,9 @@ namespace XChess
                     _SelectionInfo si = new _SelectionInfo();
                     si.Selected = Square;
                     var acts = si.Actions = new Dictionary<Square, _SelectionInfo.SelectAction>();
-                    foreach (Move m in this._Moves)
+                    foreach (KeyValuePair<Move, Board> m in this._Moves)
                     {
-                        PieceMove pm = m as PieceMove;
+                        PieceMove pm = m.Key as PieceMove;
                         if (pm != null && pm.Source == Square)
                         {
                             int type = 0;
@@ -67,7 +67,8 @@ namespace XChess
                             acts.Add(pm.Destination, new _SelectionInfo.MoveSelectAction()
                             {
                                 Type = type,
-                                Move = m
+                                Move = m.Key,
+                                Board = m.Value
                             });
                         }
                     }
@@ -85,7 +86,7 @@ namespace XChess
                         var msa = sa as _SelectionInfo.MoveSelectAction;
                         if (msa != null)
                         {
-                            this.IssueMove(msa.Move, this.Board.GetNext(msa.Move));
+                            this.IssueMove(msa.Move, msa.Board);
                         }
                     }
                 }
@@ -94,7 +95,7 @@ namespace XChess
 
         protected override void OnBoardChange(Board NewBoard)
         {
-            this._Moves = new List<Move>(NewBoard.Moves);
+            this._Moves = new List<KeyValuePair<Move, Board>>(NewBoard.Moves);
             this._Selection = null;
         }
 
@@ -128,11 +129,12 @@ namespace XChess
             public class MoveSelectAction : SelectAction
             {
                 public Move Move;
+                public Board Board;
             }
         }
 
         private _SelectionInfo _Selection;
-        private List<Move> _Moves;
+        private List<KeyValuePair<Move, Board>> _Moves;
         private int _Player;
     }
 }
