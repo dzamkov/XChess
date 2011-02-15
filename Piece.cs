@@ -89,7 +89,7 @@ namespace XChess
         /// <summary>
         /// Gets the avaiable moves for this piece if it as on the specified position on the board.
         /// </summary>
-        public virtual IEnumerable<PieceMove> GetMoves(Board Board, Square Position)
+        public virtual IEnumerable<Move> GetMoves(Board Board, Square Position)
         {
             foreach (Square s in this.GetThreats(Board, Position))
             {
@@ -223,7 +223,7 @@ namespace XChess
             }
         }
 
-        public override IEnumerable<PieceMove> GetMoves(Board Board, Square Position)
+        public override IEnumerable<Move> GetMoves(Board Board, Square Position)
         {
             int movedir = this.Player == 0 ? 1 : -1;
 
@@ -325,6 +325,17 @@ namespace XChess
     /// </summary>
     public class RookPiece : Piece
     {
+        public override IEnumerable<Move> GetMoves(Board Board, Square Position)
+        {
+            foreach (Square s in this.GetThreats(Board, Position))
+            {
+                if (this.CanMove(Board, s))
+                {
+                    yield return PieceMove.Create(Position, s, new RookPiece() { Player = this.Player, CanCastle = false });
+                }
+            }
+        }
+
         public override IEnumerable<Square> GetThreats(Board Board, Square Position)
         {
             int dx = 1;
@@ -411,6 +422,76 @@ namespace XChess
     /// </summary>
     public class KingPiece : Piece
     {
+        public override IEnumerable<Move> GetMoves(Board Board, Square Position)
+        {
+            foreach (Square s in this.GetThreats(Board, Position))
+            {
+                if (this.CanMove(Board, s))
+                {
+                    yield return PieceMove.Create(Position, s, new KingPiece() { Player = this.Player, CanCastle = false });
+                }
+            }
+
+            // Maybe castle maybe?
+            int oplayer = 1 - this.Player;
+            if (this.CanCastle && !Board.HasThreat(oplayer, Position))
+            {
+                CastleMove lc = _TryCastle(Board, Position, Player, -1);
+                CastleMove rc = _TryCastle(Board, Position, Player, 1);
+                if (lc != null) yield return lc;
+                if (rc != null) yield return rc;
+            }
+        }
+
+        private static CastleMove _TryCastle(Board Board, Square Position, int Player, int DF)
+        {
+            int oplayer = 1 - Player;
+            Square rookdest = Position.Offset(0, DF);
+            if(Board.InBoard(rookdest) && Board.GetPiece(rookdest) == null && !Board.HasThreat(oplayer, rookdest))
+            {
+                int cf = DF + DF;
+                while (true)
+                {
+                    Square test = Position.Offset(0, cf);
+                    if (!Board.InBoard(test))
+                    {
+                        return null;
+                    }
+                    Piece piece = Board.GetPiece(test);
+                    if (piece != null)
+                    {
+                        RookPiece rook = piece as RookPiece;
+                        if (rook != null && rook.Player == Player && rook.CanCastle)
+                        {
+                            return new CastleMove()
+                            {
+                                KingSource = Position,
+                                KingDestination = Position.Offset(0, DF + DF),
+                                RookSource = test,
+                                RookDestination = rookdest,
+                                NewKingState = new KingPiece()
+                                {
+                                    Player = Player,
+                                    CanCastle = false
+                                },
+                                NewRookState = new RookPiece()
+                                {
+                                    Player = Player,
+                                    CanCastle = false
+                                }
+                            };
+                        }
+                        else
+                        {
+                            return null;
+                        }
+                    }
+                    cf += DF;
+                }
+            }
+            return null;
+        }
+
         public override IEnumerable<Square> GetThreats(Board Board, Square Position)
         {
             for (int r = -1; r < 2; r++)

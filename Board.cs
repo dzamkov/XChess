@@ -117,7 +117,7 @@ namespace XChess
                         Piece piece = this.GetPiece(pos);
                         if (piece != null && piece.Player == this.PlayerToMove)
                         {
-                            foreach (PieceMove piecemove in piece.GetMoves(this, pos))
+                            foreach (Move piecemove in piece.GetMoves(this, pos))
                             {
                                 Board next = this.GetNext(piecemove);
                                 if (!next.HasThreat(1 - this.PlayerToMove, next.GetKing(this.PlayerToMove)))
@@ -262,6 +262,15 @@ namespace XChess
                 {
                     nboard.SetPiece(epm.Captured, null);
                 }
+            }
+
+            CastleMove cm = Move as CastleMove;
+            if (cm != null)
+            {
+                nboard.SetPiece(cm.KingSource, null);
+                nboard.SetPiece(cm.RookSource, null);
+                nboard.SetPiece(cm.KingDestination, cm.NewKingState);
+                nboard.SetPiece(cm.RookDestination, cm.NewRookState);
             }
 
             return nboard;

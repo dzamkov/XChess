@@ -55,4 +55,40 @@ namespace XChess
         /// </summary>
         public Square Captured;
     }
+
+    /// <summary>
+    /// A move for castling.
+    /// </summary>
+    public class CastleMove : Move
+    {
+        /// <summary>
+        /// The starting square of the king.
+        /// </summary>
+        public Square KingSource;
+
+        /// <summary>
+        /// The starting square of the rook.
+        /// </summary>
+        public Square RookSource;
+
+        /// <summary>
+        /// The final square for the king.
+        /// </summary>
+        public Square KingDestination;
+
+        /// <summary>
+        /// The final square for the rook.
+        /// </summary>
+        public Square RookDestination;
+
+        /// <summary>
+        /// The new state for the king.
+        /// </summary>
+        public Piece NewKingState;
+
+        /// <summary>
+        /// The new state for the rook.
+        /// </summary>
+        public Piece NewRookState;
+    }
 }

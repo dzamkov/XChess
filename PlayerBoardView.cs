@@ -67,7 +67,17 @@ namespace XChess
                             acts.Add(pm.Destination, new _SelectionInfo.MoveSelectAction()
                             {
                                 Type = type,
-                                Move = m.Key,
+                                Move = pm,
+                                Board = m.Value
+                            });
+                        }
+                        CastleMove cm = m.Key as CastleMove;
+                        if (cm != null && cm.KingSource == Square)
+                        {
+                            acts.Add(cm.KingDestination, new _SelectionInfo.MoveSelectAction()
+                            {
+                                Type = 2,
+                                Move = cm,
                                 Board = m.Value
                             });
                         }
@@ -126,7 +136,8 @@ namespace XChess
             {
                 Color.RGB(0.4, 0.8, 0.8),
                 Color.RGB(0.5, 0.8, 0.5),
-                Color.RGB(0.8, 0.5, 0.5)
+                Color.RGB(0.8, 0.5, 0.5),
+                Color.RGB(0.8, 0.7, 0.4)
             };
 
             /// <summary>
