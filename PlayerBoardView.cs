@@ -64,13 +64,32 @@ namespace XChess
                             {
                                 type = 1;
                             }
-                            acts.Add(pm.Destination, new _SelectionInfo.MoveSelectAction()
+
+                            // Check if there is already a move to this spot.
+                            _SelectionInfo.SelectAction sa;
+                            if (acts.TryGetValue(pm.Destination, out sa))
                             {
-                                Type = type,
-                                Move = pm,
-                                Board = m.Value
-                            });
+                                _SelectionInfo.MultiSelectAction mtsa = sa as _SelectionInfo.MultiSelectAction;
+                                if (mtsa == null)
+                                {
+                                    _SelectionInfo.MoveSelectAction msa = sa as _SelectionInfo.MoveSelectAction;
+                                    acts[pm.Destination] = mtsa = new _SelectionInfo.MultiSelectAction();
+                                    mtsa.Add(msa.Move as PieceMove, msa.Board);
+                                    mtsa.Type = 3;
+                                }
+                                mtsa.Add(pm, m.Value);
+                            }
+                            else
+                            {
+                                acts.Add(pm.Destination, new _SelectionInfo.MoveSelectAction()
+                                {
+                                    Type = type,
+                                    Move = pm,
+                                    Board = m.Value
+                                });
+                            }
                         }
+
                         CastleMove cm = m.Key as CastleMove;
                         if (cm != null && cm.KingSource == Square)
                         {
@@ -98,6 +117,12 @@ namespace XChess
                         {
                             this.IssueMove(msa.Move, msa.Board);
                         }
+
+                        var mtsa = sa as _SelectionInfo.MultiSelectAction;
+                        if (mtsa != null)
+                        {
+                            this._UpdateAction = mtsa.Display(this);
+                        }
                     }
                 }
             }
@@ -124,6 +149,16 @@ namespace XChess
             Context.DrawText(Color.RGB(0.0, 0.0, 0.0), this._ScoreSample, new Point(10.0, 10.0));
         }
 
+        public override void Update(GUIControlContext Context, double Time)
+        {
+            base.Update(Context, Time);
+            if (this._UpdateAction != null)
+            {
+                this._UpdateAction(Context);
+                this._UpdateAction = null;
+            }
+        }
+
         /// <summary>
         /// Information about a piece selection a player made.
         /// </summary>
@@ -137,7 +172,8 @@ namespace XChess
                 Color.RGB(0.4, 0.8, 0.8),
                 Color.RGB(0.5, 0.8, 0.5),
                 Color.RGB(0.8, 0.5, 0.5),
-                Color.RGB(0.8, 0.7, 0.4)
+                Color.RGB(0.8, 0.7, 0.4),
+                Color.RGB(0.8, 0.6, 0.8)
             };
 
             /// <summary>
@@ -157,7 +193,131 @@ namespace XChess
                 public Move Move;
                 public Board Board;
             }
+
+            /// <summary>
+            /// Causes a popup to display a choice of possible new states for a moving piece.
+            /// </summary>
+            public class MultiSelectAction : SelectAction
+            {
+                public MultiSelectAction()
+                {
+                    this._Items = new List<_Possible>();
+                }
+
+                /// <summary>
+                /// Adds an item to the possible selections.
+                /// </summary>
+                public void Add(PieceMove Move, Board Board)
+                {
+                    this._Items.Add(new _Possible()
+                    {
+                        Move = Move,
+                        Board = Board
+                    });
+                }
+
+                /// <summary>
+                /// Creates a function that displays the selection to the user.
+                /// </summary>
+                public Action<GUIControlContext> Display(PlayerBoardView BoardView)
+                {
+                    return delegate(GUIControlContext Context)
+                    {
+                        LayerContainer lc;
+                        Point offset;
+                        if (Context.FindAncestor<LayerContainer>(out lc, out offset))
+                        {
+                            FlowContainer options = new FlowContainer(20.0, Axis.Horizontal);
+                            Pane pane = new Pane(new SunkenContainer(options.WithMargin(20.0)).WithBorder(1.0));
+                            ModalOptions mo = new ModalOptions()
+                            {
+                                Lightbox = false,
+                                LowestModal = pane,
+                                MouseFallthrough = false
+                            };
+
+                            foreach (_Possible p in this._Items)
+                            {
+                                _Possible ip = p;
+                                options.AddChild(new _PieceIcon(p.Move.NewState, delegate
+                                {
+                                    pane.Dismiss();
+                                    BoardView.IssueMove(ip.Move, ip.Board);
+                                    lc.Modal = null;
+                                }).WithBorder(1.0), 150.0);
+                            }
+
+                            pane.ClientSize = new Point(options.SuggestLength + 42.0, 190.0);
+                            Rectangle merect = new Rectangle(offset, Context.Control.Size);
+
+                            lc.AddControl(pane, merect.Location + merect.Size * 0.5 - pane.Size * 0.5);
+                            lc.Modal = mo;
+                        }
+                    };
+                }
+
+                private class _PieceIcon : Render3DControl
+                {
+                    public _PieceIcon(Piece Piece, ClickHandler OnClick)
+                    {
+                        this._Piece = Piece;
+                        this._OnClick = OnClick;
+                    }
+
+                    public override void SetupProjection(Point Viewsize)
+                    {
+                        Matrix4d proj = Matrix4d.CreatePerspectiveFieldOfView(Math.Sin(Math.PI / 4.5), Viewsize.AspectRatio, 0.1, 100.0);
+                        Matrix4d view = Matrix4d.LookAt(4.0f, 4.0f, 4.0f, 0.0f, 0.0f, 1.4f, 0.0f, 0.0f, 1.0f);
+                        GL.MultMatrix(ref proj);
+                        GL.MultMatrix(ref view);
+                    }
+
+                    public override void RenderScene()
+                    {
+                        GL.Enable(EnableCap.CullFace);
+                        GL.Enable(EnableCap.DepthTest);
+                        GL.Enable(EnableCap.Lighting);
+                        GL.Enable(EnableCap.ColorMaterial);
+                        GL.Enable(EnableCap.Normalize);
+                        GL.Enable(EnableCap.Light0);
+                        GL.Light(LightName.Light0, LightParameter.Position, new Vector4(0.7f, 1.1f, 0.9f, 0.0f));
+                        GL.Light(LightName.Light0, LightParameter.Ambient, new Vector4(0.3f, 0.3f, 0.3f, 1.0f));
+                        GL.ColorMaterial(MaterialFace.FrontAndBack, ColorMaterialParameter.Diffuse);
+                        PieceVisual.Render(this._Piece.DisplayMesh, this._Piece.Player);
+                        GL.Disable(EnableCap.Normalize);
+                        GL.Disable(EnableCap.ColorMaterial);
+                        GL.Disable(EnableCap.Lighting);
+                        GL.Disable(EnableCap.DepthTest);
+                        GL.Disable(EnableCap.CullFace);
+                    }
+
+                    public override void Update(GUIControlContext Context, double Time)
+                    {
+                        MouseState ms = Context.MouseState;
+                        if (ms != null)
+                        {
+                            if (ms.HasReleasedButton(OpenTK.Input.MouseButton.Left))
+                            {
+                                this._OnClick();
+                            }
+                        }
+                    }
+
+                    private ClickHandler _OnClick;
+                    private Piece _Piece;
+                }
+
+                private struct _Possible
+                {
+                    public PieceMove Move;
+                    public Board Board;
+                }
+
+                private List<_Possible> _Items;
+            }
         }
+
+        private Action<GUIControlContext> _UpdateAction;
 
         private TextSample _ScoreSample;
         private _SelectionInfo _Selection;

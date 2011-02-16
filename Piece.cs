@@ -225,7 +225,9 @@ namespace XChess
 
         public override IEnumerable<Move> GetMoves(Board Board, Square Position)
         {
+            List<Move> moves = new List<Move>();
             int movedir = this.Player == 0 ? 1 : -1;
+            int lastrank = this.Player == 0 ? Board.Ranks - 1 : 0;
 
             // Move one square up
             bool jumpclear = false;
@@ -233,7 +235,7 @@ namespace XChess
             if (Board.InBoard(front) && Board.GetPiece(front) == null)
             {
                 jumpclear = true;
-                yield return PieceMove.Create(Position, front, this.AfterMove);
+                moves.AddRange(_GetActualMoves(Board, PieceMove.Create(Position, front, this.AfterMove), lastrank));
             }
 
             // Attack
@@ -248,7 +250,7 @@ namespace XChess
                     Piece target = Board.GetPiece(attacksquare);
                     if (target != null && target.Player != this.Player)
                     {
-                        yield return PieceMove.Create(Position, attacksquare, this.AfterMove);
+                        moves.AddRange(_GetActualMoves(Board, PieceMove.Create(Position, attacksquare, this.AfterMove), lastrank));
                     }
 
                     // En passant
@@ -260,13 +262,13 @@ namespace XChess
                             PawnPiece pawntarget = Board.GetPiece(behindattacksquare) as PawnPiece;
                             if (pawntarget != null && pawntarget.EnPassantThreat)
                             {
-                                yield return new EnPassantMove()
+                                moves.AddRange(_GetActualMoves(Board, new EnPassantMove()
                                 {
                                     Source = Position,
                                     Destination = attacksquare,
                                     Captured = behindattacksquare,
                                     NewState = this.AfterMove
-                                };
+                                }, lastrank));
                             }
                         }
                     }
@@ -279,13 +281,57 @@ namespace XChess
                 Square jumpsquare = Position.Offset(movedir * 2, 0);
                 if (Board.InBoard(jumpsquare) && Board.GetPiece(jumpsquare) == null)
                 {
-                    yield return PieceMove.Create(Position, jumpsquare, new PawnPiece()
+                    moves.AddRange(_GetActualMoves(Board, PieceMove.Create(Position, jumpsquare, new PawnPiece()
                     {
                         CanJump = false,
                         EnPassantThreat = true,
                         Player = this.Player
-                    });
+                    }), lastrank));
                 }
+            }
+
+            return moves;
+        }
+
+        private static IEnumerable<Move> _GetActualMoves(Board Board, PieceMove Original, int LastRank)
+        {
+            // If destination square is on last rank... promte
+            if (Original.Destination.Rank == LastRank)
+            {
+                Piece newstate = Original.NewState;
+                EnPassantMove epm = Original as EnPassantMove;
+                foreach (Piece possible in new Piece[]
+                {
+                    new QueenPiece() { Player = newstate.Player },
+                    new RookPiece() { Player = newstate.Player, CanCastle = false },
+                    new KnightPiece() { Player = newstate.Player },
+                    new BishopPiece() { Player = newstate.Player }
+                })
+                {
+                    if (epm != null)
+                    {
+                        yield return new EnPassantMove()
+                        {
+                            Captured = epm.Captured,
+                            Destination = Original.Destination,
+                            NewState = possible,
+                            Source = Original.Source
+                        };
+                    }
+                    else
+                    {
+                        yield return new PieceMove()
+                        {
+                            Destination = Original.Destination,
+                            NewState = possible,
+                            Source = Original.Source
+                        };
+                    }
+                }
+            }
+            else
+            {
+                yield return Original;
             }
         }
 

@@ -414,26 +414,32 @@ namespace XChess
         {
             if (this.Mesh != null)
             {
-                if (this.State.Player == 1)
-                {
-                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Ambient, new Vector4(0.1f, 0.1f, 0.1f, 1.0f));
-                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 32);
-                    GL.Color4(0.1, 0.1, 0.1, 1.0);
-                }
-                else
-                {
-                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Ambient, new Vector4(0.7f, 0.7f, 0.7f, 1.0f));
-                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(0.9f, 0.9f, 0.9f, 1.0f));
-                    GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 127);
-                    GL.Color4(0.5, 0.5, 0.5, 1.0);
-                    
-                }
-
                 Matrix4d trans = this.Transform;
                 GL.MultMatrix(ref trans);
-                this.Mesh.Render();
+                Render(this.Mesh, this.State.Player);
             }
+        }
+
+        /// <summary>
+        /// Renders a mesh for a piece.
+        /// </summary>
+        public static void Render(Mesh Mesh, int Player)
+        {
+            if (Player == 1)
+            {
+                GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Ambient, new Vector4(0.1f, 0.1f, 0.1f, 1.0f));
+                GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+                GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 32);
+                GL.Color4(0.1, 0.1, 0.1, 1.0);
+            }
+            else
+            {
+                GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Ambient, new Vector4(0.7f, 0.7f, 0.7f, 1.0f));
+                GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(0.9f, 0.9f, 0.9f, 1.0f));
+                GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, 127);
+                GL.Color4(0.5, 0.5, 0.5, 1.0);
+            }
+            Mesh.Render();
         }
 
         /// <summary>

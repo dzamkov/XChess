@@ -39,6 +39,7 @@ namespace XChess
                     board.SetPiece(new Square(6, t), blackpawn);
                     board.SetPiece(new Square(7, t), blackrank[t]);
                 }
+                board.SetPiece(new Square(6, 6), Piece.Pawn);
                 return board;
             }
         }
