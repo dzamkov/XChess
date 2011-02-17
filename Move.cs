@@ -113,8 +113,8 @@ namespace XChess
                     m.KingDestination == this.KingDestination &&
                     m.RookSource == this.RookSource &&
                     m.RookDestination == this.RookDestination &&
-                    m.NewKingState == this.NewKingState &&
-                    m.NewRookState == this.NewRookState;
+                    m.NewKingState.Equals(this.NewKingState) &&
+                    m.NewRookState.Equals(this.NewRookState);
             }
             return false;
         }

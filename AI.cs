@@ -41,26 +41,13 @@ namespace XChess
         /// </summary>
         private void _MakeMove()
         {
-            // Randomly
-            if (this._Tree.Paths == null)
-            {
-                this._Tree.Compute();
-            }
+            this._Tree.Compute(400);
 
-            var paths = this._Tree.Paths;
-            if (paths.Count > 0)
+            BoardTree.ScoredMove best = this._Tree.BestMove;
+            if (best != null)
             {
-                int r = this._Random.Next(paths.Count);
-                foreach (var kvp in paths)
-                {
-                    if (r == 0)
-                    {
-                        this._Tree = kvp.Value;
-                        this.ReceiveMove(kvp.Key, this._Tree.Current);
-                        break;
-                    }
-                    r--;
-                }
+                this._Tree = best.NewBoard;
+                this.ReceiveMove(best.Move, this._Tree.Current);
             }
         }
 
@@ -101,6 +88,31 @@ namespace XChess
             }
         }
 
+        /// <summary>
+        /// Computes a certain amount of possible boards in the board tree (breadth first). 
+        /// </summary>
+        public void Compute(int Amount)
+        {
+            LinkedList<BoardTree> tocompute = new LinkedList<BoardTree>();
+            tocompute.AddFirst(this);
+
+            while (tocompute.Count > 0 && Amount > 0)
+            {
+                BoardTree bt = tocompute.First.Value;
+                tocompute.Remove(tocompute.First);
+
+                if (bt.Paths == null)
+                {
+                    bt.Compute();
+                    Amount--;
+                }
+                foreach (var kvp in bt.Paths)
+                {
+                    tocompute.AddLast(kvp.Value);
+                }
+            }
+        }
+
         private class _MoveComparer : EqualityComparer<Move>
         {
             public override bool Equals(Move x, Move y)
@@ -114,6 +126,58 @@ namespace XChess
             }
 
             public static readonly _MoveComparer Singleton = new _MoveComparer();
+        }
+
+        /// <summary>
+        /// Gets the optimal move for this board tree using the minimax algorithim. Requires this tree, and possibly others,
+        /// to be computed beforehand. Note that the scores returned are for the player to move.
+        /// </summary>
+        public ScoredMove BestMove
+        {
+            get
+            {
+                int ply = this.Current.PlayerToMove;
+
+                ScoredMove res = null;
+                foreach (var kvp in this.Paths)
+                {
+                    ScoredMove possible;
+                    if (kvp.Value.Paths == null || kvp.Value.Paths.Count == 0)
+                    {
+                        double score = kvp.Value.Current.GetScore(ply);
+                        possible = new ScoredMove()
+                        {
+                            Score = score,
+                            Move = kvp.Key,
+                            NewBoard = kvp.Value
+                        };
+                    }
+                    else
+                    {
+                        possible = new ScoredMove()
+                        {
+                            Score = -kvp.Value.BestMove.Score,
+                            Move = kvp.Key,
+                            NewBoard = kvp.Value
+                        };
+                    }
+                    if (res == null || possible.Score > res.Score)
+                    {
+                        res = possible;
+                    }
+                }
+                return res;
+            }
+        }
+
+        /// <summary>
+        /// A move with a known score.
+        /// </summary>
+        public class ScoredMove
+        {
+            public double Score;
+            public Move Move;
+            public BoardTree NewBoard;
         }
 
         /// <summary>
