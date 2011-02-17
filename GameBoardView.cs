@@ -135,8 +135,8 @@ namespace XChess
         /// </summary>
         public void MakeMove(Move Move, Board NewBoard)
         {
-            this._Game.Move(Move, NewBoard);
             this.IssueMove(Move, NewBoard);
+            this._Game.Move(Move, NewBoard);
         }
 
         protected override void OnBoardChange(Board NewBoard)

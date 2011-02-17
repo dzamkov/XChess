@@ -7,7 +7,7 @@ namespace XChess
     /// Represents the state of one square on the board. Can be replaced with null to indicate the square
     /// is empty.
     /// </summary>
-    public abstract class Piece
+    public abstract class Piece : IEquatable<Piece>
     {
         /// <summary>
         /// Gets the default state for a pawn.
@@ -169,6 +169,26 @@ namespace XChess
                 }
             }
             return false;
+        }
+
+        /// <summary>
+        /// Gets if this piece is equivalent to another.
+        /// </summary>
+        public abstract bool Equals(Piece Other);
+
+        public override bool Equals(object obj)
+        {
+            Piece p = obj as Piece;
+            if (p != null)
+            {
+                return this.Equals(p);
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return 0x00000000;
         }
 
         /// <summary>
@@ -345,6 +365,16 @@ namespace XChess
             };
         }
 
+        public override bool Equals(Piece Other)
+        {
+            PawnPiece p = Other as PawnPiece;
+            if (p != null)
+            {
+                return p.Player == this.Player && p.EnPassantThreat == this.EnPassantThreat && p.CanJump == this.CanJump;
+            }
+            return false;
+        }
+
         /// <summary>
         /// Can this pawn be taken with en passant the next turn?
         /// </summary>
@@ -396,6 +426,16 @@ namespace XChess
                 dy = -dx;
                 dx = temp;
             }
+        }
+
+        public override bool Equals(Piece Other)
+        {
+            RookPiece p = Other as RookPiece;
+            if (p != null)
+            {
+                return p.Player == this.Player && p.CanCastle == this.CanCastle;
+            }
+            return false;
         }
 
         public override double Value
@@ -450,6 +490,16 @@ namespace XChess
             {
                 return 9.0;
             }
+        }
+
+        public override bool Equals(Piece Other)
+        {
+            QueenPiece p = Other as QueenPiece;
+            if (p != null)
+            {
+                return p.Player == this.Player;
+            }
+            return false;
         }
 
         public override Mesh DisplayMesh
@@ -560,6 +610,16 @@ namespace XChess
             }
         }
 
+        public override bool Equals(Piece Other)
+        {
+            KingPiece p = Other as KingPiece;
+            if (p != null)
+            {
+                return p.Player == this.Player && p.CanCastle == this.CanCastle;
+            }
+            return false;
+        }
+
         /// <summary>
         /// Can this king castle eventually?
         /// </summary>
@@ -604,6 +664,16 @@ namespace XChess
             }
         }
 
+        public override bool Equals(Piece Other)
+        {
+            KnightPiece p = Other as KnightPiece;
+            if (p != null)
+            {
+                return p.Player == this.Player;
+            }
+            return false;
+        }
+
         public override Mesh DisplayMesh
         {
             get
@@ -631,6 +701,16 @@ namespace XChess
                     yield return threat;
                 }
             }
+        }
+
+        public override bool Equals(Piece Other)
+        {
+            BishopPiece p = Other as BishopPiece;
+            if (p != null)
+            {
+                return p.Player == this.Player;
+            }
+            return false;
         }
 
         public override double Value

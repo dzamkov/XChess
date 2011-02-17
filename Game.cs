@@ -32,6 +32,17 @@ namespace XChess
         }
 
         /// <summary>
+        /// Causes the player of this game to receive the given move.
+        /// </summary>
+        protected void ReceiveMove(Move Move, Board NewBoard)
+        {
+            if (this.MoveReceived != null)
+            {
+                this.MoveReceived(Move, NewBoard);
+            }
+        }
+
+        /// <summary>
         /// Called when a external move is received.
         /// </summary>
         public event MoveReceivedHandler MoveReceived;

@@ -19,7 +19,7 @@ namespace XChess
             this.VSync = VSyncMode.Off;
 
             Board board = Board.Initial;
-            LocalGame game = new LocalGame(board);
+            Game game = new AIGame(0, board);
             this.Control = this._LayerContainer = new LayerContainer((this._View = new GameBoardView(game)));
             this.WindowState = WindowState.Maximized;
         }
