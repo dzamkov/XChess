@@ -37,7 +37,7 @@ namespace XChess
                 }
                 if (m != null)
                 {
-                    return Color.Mix(m.Value, b, 0.2);
+                    return Color.Mix(m.Value, b, 0.1);
                 }
             }
             return b;
@@ -75,7 +75,7 @@ namespace XChess
                                     _SelectionInfo.MoveSelectAction msa = sa as _SelectionInfo.MoveSelectAction;
                                     acts[pm.Destination] = mtsa = new _SelectionInfo.MultiSelectAction();
                                     mtsa.Add(msa.Move as PieceMove, msa.Board);
-                                    mtsa.Type = 3;
+                                    mtsa.Type = 2;
                                 }
                                 mtsa.Add(pm, m.Value);
                             }
@@ -169,11 +169,10 @@ namespace XChess
 
             public static readonly Color[] Colors = new Color[]
             {
-                Color.RGB(0.4, 0.8, 0.8),
-                Color.RGB(0.5, 0.8, 0.5),
-                Color.RGB(0.8, 0.5, 0.5),
-                Color.RGB(0.8, 0.7, 0.4),
-                Color.RGB(0.8, 0.6, 0.8)
+                Color.RGB(0.3, 0.8, 0.8),
+                Color.RGB(0.4, 0.8, 0.4),
+                Color.RGB(0.8, 0.4, 0.4),
+                Color.RGB(0.8, 0.7, 0.3)
             };
 
             /// <summary>
@@ -239,12 +238,14 @@ namespace XChess
                             foreach (_Possible p in this._Items)
                             {
                                 _Possible ip = p;
-                                options.AddChild(new _PieceIcon(p.Move.NewState, delegate
+                                Button button = new Button(ButtonStyle.CreateSolid(Skin.Default), new _PieceIcon(p.Move.NewState).CreateControl());
+                                options.AddChild(button, 150.0);
+                                button.Click += delegate
                                 {
+                                    lc.Modal = null;
                                     pane.Dismiss();
                                     BoardView.IssueMove(ip.Move, ip.Board);
-                                    lc.Modal = null;
-                                }).WithBorder(1.0), 150.0);
+                                };
                             }
 
                             pane.ClientSize = new Point(options.SuggestLength + 42.0, 190.0);
@@ -256,12 +257,11 @@ namespace XChess
                     };
                 }
 
-                private class _PieceIcon : Render3DControl
+                private class _PieceIcon : Render3DSurface
                 {
-                    public _PieceIcon(Piece Piece, ClickHandler OnClick)
+                    public _PieceIcon(Piece Piece)
                     {
                         this._Piece = Piece;
-                        this._OnClick = OnClick;
                     }
 
                     public override void SetupProjection(Point Viewsize)
@@ -274,6 +274,7 @@ namespace XChess
 
                     public override void RenderScene()
                     {
+                        GL.Disable(EnableCap.Texture2D);
                         GL.Enable(EnableCap.CullFace);
                         GL.Enable(EnableCap.DepthTest);
                         GL.Enable(EnableCap.Lighting);
@@ -291,19 +292,6 @@ namespace XChess
                         GL.Disable(EnableCap.CullFace);
                     }
 
-                    public override void Update(GUIControlContext Context, double Time)
-                    {
-                        MouseState ms = Context.MouseState;
-                        if (ms != null)
-                        {
-                            if (ms.HasReleasedButton(OpenTK.Input.MouseButton.Left))
-                            {
-                                this._OnClick();
-                            }
-                        }
-                    }
-
-                    private ClickHandler _OnClick;
                     private Piece _Piece;
                 }
 
