@@ -10,14 +10,16 @@ using OpenTKGUI;
 namespace XChess
 {
     /// <summary>
-    /// A view of the board from the perspective of a player.
+    /// A view of the board while a game is actively being played.
     /// </summary>
-    public class PlayerBoardView : BoardView
+    public class GameBoardView : BoardView
     {
-        public PlayerBoardView(Board Board, int Player)
-            : base(Board)
+        public GameBoardView(Game Game)
+            : base(Game.Board)
         {
-            this._Player = Player;
+            this._Game = Game;
+            this._Game.MoveReceived += this.IssueMove;
+            this.OnBoardChange(this.Board);
         }
 
         public override Color GetSquareColor(Square Square)
@@ -115,7 +117,7 @@ namespace XChess
                         var msa = sa as _SelectionInfo.MoveSelectAction;
                         if (msa != null)
                         {
-                            this.IssueMove(msa.Move, msa.Board);
+                            this.MakeMove(msa.Move, msa.Board);
                         }
 
                         var mtsa = sa as _SelectionInfo.MultiSelectAction;
@@ -128,9 +130,25 @@ namespace XChess
             }
         }
 
+        /// <summary>
+        /// Forces the current player to make a move.
+        /// </summary>
+        public void MakeMove(Move Move, Board NewBoard)
+        {
+            this._Game.Move(Move, NewBoard);
+            this.IssueMove(Move, NewBoard);
+        }
+
         protected override void OnBoardChange(Board NewBoard)
         {
-            this._Moves = new List<KeyValuePair<Move, Board>>(NewBoard.Moves);
+            if (this._Game.Player == NewBoard.PlayerToMove)
+            {
+                this._Moves = new List<KeyValuePair<Move, Board>>(NewBoard.Moves);
+            }
+            else
+            {
+                this._Moves = new List<KeyValuePair<Move, Board>>();
+            }
             this._Selection = null;
 
             if (this._ScoreSample != null)
@@ -218,7 +236,7 @@ namespace XChess
                 /// <summary>
                 /// Creates a function that displays the selection to the user.
                 /// </summary>
-                public Action<GUIControlContext> Display(PlayerBoardView BoardView)
+                public Action<GUIControlContext> Display(GameBoardView BoardView)
                 {
                     return delegate(GUIControlContext Context)
                     {
@@ -244,7 +262,7 @@ namespace XChess
                                 {
                                     lc.Modal = null;
                                     pane.Dismiss();
-                                    BoardView.IssueMove(ip.Move, ip.Board);
+                                    BoardView.MakeMove(ip.Move, ip.Board);
                                 };
                             }
 
@@ -310,6 +328,6 @@ namespace XChess
         private TextSample _ScoreSample;
         private _SelectionInfo _Selection;
         private List<KeyValuePair<Move, Board>> _Moves;
-        private int _Player;
+        private Game _Game;
     }
 }

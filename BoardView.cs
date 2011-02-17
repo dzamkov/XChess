@@ -23,7 +23,6 @@ namespace XChess
             this._BoardTexture = Texture.Load(resources["Textures"]["Board.png"]);
 
             this._SetupVisuals();
-            this.OnBoardChange(Board);
         }
 
         /// <summary>
